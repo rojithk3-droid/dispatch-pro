@@ -2728,6 +2728,20 @@
      centring the tick (::after) depends on — the box fills blue with no tick.
      Flex is also block-level, so the cell geometry is unchanged. */
   .pay-table td > .row-checkbox, .pay-table th > .row-checkbox{ display:flex; }
+
+  /* ---- New Payroll: edit mode (date + time pairs, range field) ---- */
+  #dlgNew .ro-grid{ gap:15px 16.25px; }
+  #dlgNew .ro-grid .k{ color:var(--text-body); font-weight:500; }
+  #dlgNew .ro-grid .v.in{ background:var(--accent); }
+  .nw-pair{ display:grid; grid-template-columns:1fr; gap:10px; }
+  .nw-icon-field{ position:relative; }
+  .nw-icon-field .text-input{ width:100%; padding-right:35px; cursor:default; }
+  .nw-icon-field svg{ position:absolute; right:12.5px; top:50%; margin-top:-8.125px; width:16.25px; height:16.25px; color:var(--blue); pointer-events:none; }
+  #dlgNew .dialog-panel[data-mode="view"] .ed{ display:none; }
+  #dlgNew .dialog-panel[data-mode="edit"] .vw{ display:none; }
+  #dlgNew .dialog-panel[data-mode="edit"] .ed{ display:block; }
+  #dlgNew .dialog-panel[data-mode="edit"] .nw-pair{ display:grid; }
+  #dlgNew .dialog-panel[data-mode="view"] .v:not(.in){ display:flex; align-items:center; min-height:var(--h-9); }
 </style>
 
   <!-- TOP BAR -->
@@ -2894,22 +2908,27 @@
       </div>
       <div class="ro-grid">
         <div><div class="k">Batch #</div><div class="v in" id="nwBatch">Auto Generated</div></div>
-        <div><div class="k">Pay Class</div><div class="v" id="nwClass" style="height:var(--h-9);display:flex;align-items:center">Employees</div></div>
-        <div><div class="k">Pay Period</div><div class="v" id="nwPeriod"></div></div>
+        <div><div class="k">Pay Class</div><div class="v in" id="nwClass">Employees</div></div>
         <div>
-          <div class="k">Direct Deposit Date</div>
-          <div class="v vw" id="nwDepV"></div>
-          <input type="date" class="text-input ed" id="nwDep" hidden>
+          <div class="k">Pay Period</div>
+          <div class="v vw" id="nwPeriod"></div>
+          <div class="ed nw-icon-field"><input type="text" class="text-input dlg-plain" id="nwPeriodIn" readonly aria-label="Pay period"><i data-lucide="calendar-range"></i></div>
         </div>
+        <div></div>
         <div>
           <div class="k">Period Start</div>
           <div class="v vw" id="nwStartV"></div>
-          <input type="datetime-local" class="text-input ed" id="nwStart" hidden>
+          <div class="ed nw-pair"><input type="date" class="text-input" id="nwSD" aria-label="Period start date"><input type="time" class="text-input" id="nwST" aria-label="Period start time"></div>
         </div>
         <div>
           <div class="k">Period End</div>
           <div class="v vw" id="nwEndV"></div>
-          <input type="datetime-local" class="text-input ed" id="nwEnd" hidden>
+          <div class="ed nw-pair"><input type="date" class="text-input" id="nwED" aria-label="Period end date"><input type="time" class="text-input" id="nwET" aria-label="Period end time"></div>
+        </div>
+        <div>
+          <div class="k">Direct Deposit Date</div>
+          <div class="v vw" id="nwDepV"></div>
+          <input type="date" class="text-input ed" id="nwDep" aria-label="Direct deposit date">
         </div>
       </div>
       <p class="field-error" id="nwErr" hidden style="margin:10px 0 0"><i data-lucide="circle-alert"></i> <span></span></p>
@@ -4569,7 +4588,7 @@
         Q('#nwClass').textContent = CLS[S.cls].label;
         Q('#nwPeriod').textContent = us(NP.ps) + ' - ' + us(NP.pe);
         Q('#nwDepV').textContent = us(NP.dep); Q('#nwStartV').textContent = usTime(NP.ps); Q('#nwEndV').textContent = usTime(NP.pe);
-        Q('#nwDep').value = NP.dep; Q('#nwStart').value = NP.ps; Q('#nwEnd').value = NP.pe;
+        Q('#nwDep').value = NP.dep; Q('#nwSD').value = NP.ps.slice(0, 10); Q('#nwST').value = NP.ps.slice(11, 16); Q('#nwED').value = NP.pe.slice(0, 10); Q('#nwET').value = NP.pe.slice(11, 16); Q('#nwPeriodIn').value = us(NP.ps) + ' - ' + us(NP.pe);
       }
       function newMode(m){
         NEWP.setAttribute('data-mode', m);
@@ -4586,13 +4605,14 @@
         newFill(); newMode('view'); window.dpDialog.open('dlgNew');
       }
       Q('#nwEdit').addEventListener('click', function(){ newMode('edit'); });
+['nwSD', 'nwED'].forEach(function(id){ Q('#' + id).addEventListener('input', function(){ Q('#nwPeriodIn').value = (Q('#nwSD').value ? us(Q('#nwSD').value) : '—') + ' - ' + (Q('#nwED').value ? us(Q('#nwED').value) : '—'); }); });
       Q('#nwCancel').addEventListener('click', function(){
         if(NEWP.getAttribute('data-mode') === 'edit'){ newFill(); newMode('view'); } else window.dpDialog.close('dlgNew');
       });
       Q('#nwStartBtn').addEventListener('click', function(){
         if(NEWP.getAttribute('data-mode') === 'edit'){
-          var ps = Q('#nwStart').value, pe = Q('#nwEnd').value, dep = Q('#nwDep').value, err = '';
-          if(!ps || !pe || !dep) err = 'Fill in the period start, period end and deposit date.';
+          var ps = Q('#nwSD').value + 'T' + (Q('#nwST').value || '00:00'), pe = Q('#nwED').value + 'T' + (Q('#nwET').value || '23:59'), dep = Q('#nwDep').value, err = '';
+          if(!Q('#nwSD').value || !Q('#nwED').value || !dep) err = 'Fill in the period start, period end and deposit date.';
           else if(pe <= ps) err = 'Period end has to be after the period start.';
           else if(dep < pe.slice(0, 10)) err = 'The deposit date cannot be before the period ends.';
           if(err){ Q('#nwErr span').textContent = err; Q('#nwErr').hidden = false; window.dpDialog.snap('dlgNew'); return; }
