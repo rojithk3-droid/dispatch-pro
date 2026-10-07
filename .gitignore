@@ -3,3 +3,4 @@ serve.ps1
 .claude/scheduled_tasks.lock
 .claude/settings.local.json
 node_modules/
+_review-nested-git-backup/
