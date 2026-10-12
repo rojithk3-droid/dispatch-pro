@@ -2771,6 +2771,7 @@ function stopsFor(dr,b){
       date: mdY(t),
       time: clock(t),
       label: r()<0.75?"APPOINTMENT":"FCFS",
+      t: t,
       next: next
     });
   }
@@ -2832,36 +2833,47 @@ function popHtml(dr,b){
       '<span class="hclinks"><a data-pop="notes">Notes</a><a href="'+href+'" target="_blank" rel="noopener">Edit</a></span></div>'+
     (popNotes?noteBlock(b,href):"")+'</div>';
 }
-function stopRow(s,i,total){
-  var badge = i===0 ? '<div class="stopn n-first">1</div>'
-            : i===total-1 ? '<div class="stopn n-last">99</div>'
-            : '<div class="stopn n-mid">'+(i+1)+'</div>';
-  return '<div class="stop">'+
-    '<div class="grip">'+(i>1?"\u2059":"")+'</div>'+badge+
-    '<div class="stopbody">'+
-      '<div class="stoptop"><b>'+esc(s.name)+'</b><span class="code">('+esc(s.code)+')</span>'+
-        '<span class="'+(s.type==="Shipper"?"c-ship":"c-recv")+'">'+esc(s.type)+'</span></div>'+
-      '<div class="stopaddr">'+esc(s.addr)+' \u00b7 <span class="live">'+esc(s.mode)+'</span></div>'+
-    '</div>'+
-    '<div class="when"><b>'+esc(s.date)+'</b><span class="t">'+esc(s.time)+'</span>'+
-      '<span class="appt">'+esc(s.label)+'</span></div>'+
-  '</div>'+
-  (i<total-1 ? '<div class="leg"><span><b>'+s.next+' mi</b> to next stop</span></div>' : '');
+function stopRow(s,i,total,nextIdx){
+  var done=s.t<=NOW, nx=(i===nextIdx), first=i===0, last=i===total-1;
+  var kind=first?"Pickup":last?"Delivery":"Stop "+(i+1);
+  var kcls=first?"pk":last?"dl":"md";
+  var state=done?'<span class="sm-st ok">Completed</span>':nx?'<span class="sm-st nx">Next stop</span>':'<span class="sm-st">Scheduled</span>';
+  var node=done?'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>':(last?'<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M5 3h2v18H5zm4 1h10l-2.5 4L19 12H9z"/></svg>':String(i+1));
+  var pin='<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-5.5 10.2-7.4 11.8a1 1 0 0 1-1.2 0C9.5 20.2 4 15 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>';
+  return '<div class="sm-row'+(done?" done":"")+(nx?" next":"")+'">'+
+    '<div class="sm-rail"><span class="sm-node">'+node+'</span>'+(last?'':'<span class="sm-line"></span>')+'</div>'+
+    '<div class="sm-card">'+
+      '<div class="sm-main">'+
+        '<div class="sm-t"><span class="sm-k '+kcls+'">'+kind+'</span><b>'+esc(s.name)+'</b><span class="sm-code">'+esc(s.code)+'</span></div>'+
+        '<div class="sm-a">'+pin+'<span>'+esc(s.addr)+'</span></div>'+
+        '<div class="sm-tags"><span class="sm-tag">'+esc(s.type)+'</span><span class="sm-tag'+(s.mode==="Live"?" live":"")+'">'+esc(s.mode)+' '+(s.type==="Shipper"?"load":"unload")+'</span><span class="sm-tag">'+(s.label==="FCFS"?"FCFS":"Appointment")+'</span></div>'+
+      '</div>'+
+      '<div class="sm-when"><b>'+esc(s.date)+'</b><span>'+esc(s.time)+'</span>'+state+'</div>'+
+    '</div></div>'+
+    (!last?'<div class="sm-leg"><span class="sm-lr"></span><span class="sm-lc"><b>'+s.next+' mi</b> to next stop</span></div>':'');
 }
 function openStops(dr,b){
   var st=stopsFor(dr,b);
   if(!st.length) return;
+  var ls=lastSeen(b), pc=Math.round(progress(b)), kind=kindOf(b);
+  var nextIdx=-1; for(var q=0;q<st.length;q++){ if(st[q].t>NOW){ nextIdx=q; break } }
+  var KL={tran:"In transit",late:"Late",plan:"Pre-planned",sent:"Sent to driver",conf:"Confirmed",del:"Delivered",cancel:"Cancelled",hold:"On hold"};
+  var X='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
   $("#modal").innerHTML=
-    '<div class="mhead"><div><div class="no">'+esc(b.load)+'</div>'+
-      '<div class="sub">'+esc(b.o)+' \u2192 '+esc(b.d)+' \u00b7 '+(st.length-2)+' stops \u00b7 '+esc(dr.n)+'</div></div>'+
-      '<div class="sp"></div><div class="mtot">'+st.length+' stops \u00b7 '+b.miles+' loaded mi</div>'+
-      '<button class="mclose" data-mclose="1">&#10005;</button></div>'+
-    '<div class="mbody">'+st.map(function(x,i){return stopRow(x,i,st.length)}).join("")+'</div>'+
-    '<div class="mfoot"><span class="note">Mileage is practical route, shipper to final consignee.</span>'+
-      '<div class="sp"></div><button class="btnb" data-mclose="1">Close</button></div>';
+    '<div class="sm-head"><div class="sm-ttl"><div class="sm-eye"><span class="sm-no">'+esc(b.load)+'</span><span class="sm-badge k-'+kind+'">'+(KL[kind]||"Load")+'</span></div>'+
+      '<h2>Stops</h2><div class="sm-sub">'+esc(b.cust)+' \u00b7 '+esc(b.o)+' \u2192 '+esc(b.d)+' \u00b7 '+esc(dr.n)+'</div></div>'+
+      '<button class="sm-x" data-mclose="1" aria-label="Close">'+X+'</button></div>'+
+    '<div class="sm-sum">'+
+      '<div><label>Stops</label><b>'+st.length+'</b></div>'+
+      '<div><label>Loaded miles</label><b>'+b.miles+'<small>mi</small></b></div>'+
+      '<div><label>Driven</label><b>'+(b.miles-ls.out)+'<small>mi</small></b></div>'+
+      '<div><label>Remaining</label><b>'+ls.out+'<small>mi</small></b></div>'+
+    '</div>'+
+    '<div class="sm-prog"><div class="sm-bar"><i style="width:'+pc+'%"></i></div><span>'+(NOW<=b.s?"Not started":pc+"% complete")+'</span></div>'+
+    '<div class="sm-body">'+st.map(function(x,i){return stopRow(x,i,st.length,nextIdx)}).join("")+'</div>'+
+    '<div class="sm-foot"><span>Mileage is practical route, shipper to final consignee.</span><button class="sm-btn" data-mclose="1">Close</button></div>';
   $("#modal").classList.add("on"); $("#mscrim").classList.add("on");
-}
-function closeStops(){ $("#modal").classList.remove("on"); $("#mscrim").classList.remove("on") }
+}function closeStops(){ $("#modal").classList.remove("on"); $("#mscrim").classList.remove("on") }
 
 function countPct(){
   var el=document.querySelector("#pop .pnum");
@@ -4619,7 +4631,68 @@ document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&document.g
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <style>
-.legtog{display:flex;align-items:center;gap:6px;width:100%;padding:8px 11px;border:0;border-top:1px solid #e4ebf1;background:#fbfcfe;font:inherit;font-size:11.5px;font-weight:600;color:#5a646d;cursor:pointer;text-align:left}
+#modal{width:600px;border-radius:14px;font-family:Inter,"Segoe UI",Arial,sans-serif;color:#14161f}
+.sm-head{display:flex;align-items:flex-start;gap:14px;padding:20px 24px 14px}
+.sm-ttl{flex:1;min-width:0}
+.sm-eye{display:flex;align-items:center;gap:8px}
+.sm-no{font-size:11px;font-weight:700;letter-spacing:.06em;color:#6b6f80}
+.sm-badge{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:10px;font-size:10.5px;font-weight:600;background:#eaf2ff;color:var(--fblue)}
+.sm-badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.sm-badge.k-late,.sm-badge.k-hold,.sm-badge.k-cancel{background:#fdecee;color:#d12328}
+.sm-badge.k-tran{background:#e7f8ec;color:#178a3c}
+.sm-badge.k-del{background:#eef1f4;color:#5f6a74}
+.sm-badge.k-sent{background:#fff6dd;color:#a9760a}
+.sm-head h2{margin:6px 0 0;font-size:18px;font-weight:700;color:var(--navy);line-height:1.2}
+.sm-sub{font-size:12px;color:#6b6f80;margin-top:4px}
+.sm-x{flex:none;width:32px;height:32px;border-radius:50%;border:1px solid #dfe4e9;background:#fff;color:#5f6a74;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.sm-x:hover{background:#eaf2ff;border-color:var(--fblue);color:var(--fblue)}
+.sm-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin:0 24px;background:#e3e7ee;border:1px solid #e3e7ee;border-radius:10px;overflow:hidden}
+.sm-sum div{background:#fff;padding:10px 12px}
+.sm-sum label{display:block;font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8a8f9c}
+.sm-sum b{display:block;margin-top:3px;font-size:17px;font-weight:700;color:#14161f}
+.sm-sum b small{font-size:11px;font-weight:500;color:#8a8f9c;margin-left:3px}
+.sm-prog{display:flex;align-items:center;gap:10px;margin:12px 24px 4px;font-size:11px;color:#6b6f80}
+.sm-bar{flex:1;height:6px;border-radius:3px;background:#eef1f4;overflow:hidden}
+.sm-bar i{display:block;height:100%;background:var(--fblue);border-radius:3px}
+.sm-body{overflow:auto;padding:14px 24px 8px;margin-top:6px}
+.sm-row{display:flex;gap:14px;align-items:stretch}
+.sm-rail{flex:none;width:26px;display:flex;flex-direction:column;align-items:center}
+.sm-node{width:26px;height:26px;border-radius:50%;border:2px solid #c9d3df;background:#fff;color:#6b6f80;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;box-sizing:border-box}
+.sm-line{flex:1;width:2px;background:#dfe5ec;margin:3px 0;min-height:18px}
+.sm-row.done .sm-node{background:var(--fblue);border-color:var(--fblue);color:#fff}
+.sm-row.done .sm-line{background:var(--fblue)}
+.sm-row.next .sm-node{border-color:var(--fblue);color:var(--fblue);box-shadow:0 0 0 4px rgba(13,110,253,.14)}
+.sm-card{flex:1;min-width:0;display:flex;gap:14px;justify-content:space-between;padding:12px 14px;border:1px solid #e3e7ee;border-radius:12px;background:#fff;margin-bottom:0}
+.sm-row.next .sm-card{border-color:#b9d3fb;background:#f7faff}
+.sm-row.done .sm-card{background:#fbfcfd}
+.sm-main{min-width:0;flex:1}
+.sm-t{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sm-t b{font-size:13.5px;color:#14161f}
+.sm-k{height:18px;padding:0 7px;border-radius:5px;font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;display:inline-flex;align-items:center}
+.sm-k.pk{background:#fff5e0;color:#b97a00}
+.sm-k.dl{background:#e7f8ec;color:#178a3c}
+.sm-k.md{background:#eef1f4;color:#5f6a74}
+.sm-code{font-size:11px;color:#8a8f9c;font-weight:600}
+.sm-a{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:#6b6f80}
+.sm-a svg{flex:none;color:#8a8f9c}
+.sm-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.sm-tag{height:20px;padding:0 8px;border-radius:10px;border:1px solid #e3e7ee;background:#fff;font-size:10.5px;font-weight:600;color:#5f6a74;display:inline-flex;align-items:center}
+.sm-tag.live{border-color:#bcd6f7;background:#eaf2ff;color:var(--fblue)}
+.sm-when{flex:none;text-align:right;min-width:100px}
+.sm-when b{display:block;font-size:12.5px}
+.sm-when>span{display:block;font-size:12px;color:#6b6f80;margin-top:2px}
+.sm-st{margin-top:8px !important;display:inline-flex !important;height:20px;padding:0 8px;border-radius:10px;background:#eef1f4;color:#5f6a74 !important;font-size:10.5px !important;font-weight:600}
+.sm-st.ok{background:#e7f8ec;color:#178a3c !important}
+.sm-st.nx{background:#eaf2ff;color:var(--fblue) !important}
+.sm-leg{display:flex;gap:14px;align-items:center;min-height:30px}
+.sm-lr{flex:none;width:26px;align-self:stretch;position:relative}
+.sm-lr::before{content:"";position:absolute;left:12px;top:0;bottom:0;width:2px;background:#dfe5ec}
+.sm-row.done+.sm-leg .sm-lr::before{background:var(--fblue)}
+.sm-lc{font-size:11px;color:#8a8f9c;padding:6px 0}
+.sm-lc b{color:#5f6a74;font-weight:600}
+.sm-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 24px 18px;border-top:1px solid #eef1f4;font-size:11px;color:#8a8f9c}
+.sm-btn{height:34px;padding:0 20px;border-radius:8px;border:1px solid var(--fblue);background:#fff;color:var(--fblue);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+.sm-btn:hover{background:var(--fblue);color:#fff}.legtog{display:flex;align-items:center;gap:6px;width:100%;padding:8px 11px;border:0;border-top:1px solid #e4ebf1;background:#fbfcfe;font:inherit;font-size:11.5px;font-weight:600;color:#5a646d;cursor:pointer;text-align:left}
 .legtog:hover{color:var(--fblue)}
 .legtog svg{width:14px;height:14px;transition:transform .15s}
 .legtog[aria-expanded="true"] svg{transform:rotate(180deg)}
