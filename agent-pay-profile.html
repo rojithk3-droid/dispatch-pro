@@ -1985,11 +1985,10 @@
   .begin-back svg{ width:17.5px; height:17.5px; }
   .begin-back:hover{ color:var(--blue); }
   .begin-back:focus-visible{ outline:none; box-shadow:0 0 0 var(--ring-w) var(--ring); }
-  /* The choice cards read as links from the start - blue title, blue icon -
-     rather than waiting for hover to say they can be clicked. */
-  .begin-panel .choice-card-title{ color:var(--blue); }
-  .begin-panel .choice-card-icon{ color:var(--blue); border-color:var(--blue); background:var(--surface); }
-  [data-theme="dark"] .begin-panel .choice-card-title{ color:#A9CBFF; }
+  /* Choice cards: black title, no icon; the title turns blue on hover. */
+  .begin-panel .choice-card-title{ color:var(--text-heading); transition:color .13s ease; }
+  .begin-panel .choice-card:hover .choice-card-title{ color:var(--blue); }
+  [data-theme="dark"] .begin-panel .choice-card:hover .choice-card-title{ color:#A9CBFF; }
   /* The saved list runs edge to edge under the heading, rows inset to the
      panel's own padding so icons line up with the title. */
   .begin-panel [data-begin-view="select"]{
@@ -2369,12 +2368,10 @@
                 <div class="dialog-body" data-begin-view="choose">
                   <div class="choice-grid">
                     <button type="button" class="choice-card" data-begin-go="select">
-                      <span class="choice-card-icon"><i data-lucide="folder-open"></i></span>
                       <span class="choice-card-title">Select pay profile</span>
                       <span class="choice-card-desc">Open one of your saved profiles and pick up where it left off.</span>
                     </button>
                     <button type="button" class="choice-card" data-begin-go="new">
-                      <span class="choice-card-icon"><i data-lucide="file-plus-2"></i></span>
                       <span class="choice-card-title">Add pay profile</span>
                       <span class="choice-card-desc">Name a new profile and build its pay lines from scratch.</span>
                     </button>
