@@ -7,10 +7,13 @@
      in the app itself. It's there so a stale download can be spotted in one
      glance instead of by re-testing, which is why the file no longer needs a
      new version in its name each time. Say the word and it comes out. -->
-<title>Prochat — Dispatch PRO · build 12</title>
+<title>Prochat — Dispatch PRO · build 13</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..800&display=swap" rel="stylesheet">
+<!-- Live map tiles for the load tracker and Shipment Location History. -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <style>
 /* ============================================================================
    Prochat — Dispatch PRO
@@ -2026,7 +2029,7 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
 .dtile__label { font-size: 11px; line-height: 14px; font-weight: 500; color: var(--d-muted); }
 .dtile__who { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .dtile__who > span { display: flex; flex-direction: column; min-width: 0; }
-.dtile__who .avatar { flex: 0 0 auto; background-size: cover; background-position: center; border-radius: 8px; }
+.dtile__who .avatar { flex: 0 0 auto; display: grid; place-items: center; text-align: center; line-height: 1; background-size: cover; background-position: center; border-radius: 50%; }
 .dtile__who b { font-size: 13px; line-height: 17px; font-weight: 700; color: var(--d-ink); }
 .dtile__who small { font-size: 11px; line-height: 14px; color: var(--d-muted); }
 .dtile .dbadge { align-self: flex-start; height: 22px; font-size: 11px; letter-spacing: 0; text-transform: none; font-weight: 600; }
@@ -2229,6 +2232,245 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
 .dreview:hover .dhead__icon { background: var(--d-blue); border-color: var(--d-blue); color: #fff; }
 .dreview .rating__stars { display: flex; flex: 0 0 auto; gap: 2px; }
 .dreview .rating__stars svg { width: 14px; height: 14px; }
+
+/* ============================================================================
+   BUILD 13 — right-panel revisions
+   Hero (bigger photo, no ring, Expand all), planner duty cards, Add buttons in
+   Communication history, last-location provider rows, expandable truck /
+   trailer cards, files + images as one card, load details (1 → 99 line, live
+   map tracker, always opened), centred documents table, a real map on
+   Shipment Location History, and the Command Center sidebar forms.
+   ==========================================================================*/
+
+/* ---------- header back arrow (sidebar forms) -------------------------------- */
+.details__title { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.details__back { margin-left: -6px; }
+
+/* ---------- hero: bigger photo, no ring, shorter ----------------------------- */
+.details .card--hero .avatar--83 { border: 0; box-shadow: none; }
+/* hero: original centred layout, with a much bigger photo; Expand all is a plain text button underneath */
+.details .card--hero { flex-wrap: wrap; }
+.view[data-view="details"] > .card--hero:not(.card--duo) .avatar--83 { width: 148px; height: 148px; font-size: 46px; }
+.view[data-view="details"] > .card--hero:not(.card--duo) .avatar--83.is-online::before { right: 12px; bottom: 12px; width: 24px; height: 24px; border-width: 4px; }
+.details .card > .hero__expand {
+  order: 9; flex: 0 0 100%; position: static; display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  height: 28px; margin-top: 6px; padding: 0; border: 0; border-radius: 6px; background: none;
+  font-size: 12px; font-weight: 600; color: var(--d-blue); white-space: nowrap;
+}
+.hero__expand svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .18s ease; }
+.hero__expand[aria-pressed="true"] svg { transform: rotate(180deg); }
+.hero__expand:hover { text-decoration: underline; }
+.details .card--duo .avatar--83 { width: 84px; height: 84px; font-size: 26px; }
+.details .card--duo .avatar--83.is-online::before { right: 3px; bottom: 3px; }
+
+
+/* ---------- the planner's duty-status card ------------------------------------ */
+.dstat { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; color: #364153; white-space: nowrap; }
+.dstat .duty {
+  display: inline-grid; place-items: center; min-width: 16px; height: 15px; padding: 0 2px; border-radius: 4px;
+  font-size: 9px; line-height: 1; font-weight: 600; letter-spacing: 0; color: #fff; background: #19C936;
+}
+.dstat .duty.d-D  { background: #19C936; }
+.dstat .duty.d-ON { background: #FF6D10; }
+.dstat .duty.d-OF { background: #FF0000; }
+.dstat .duty.d-SB { background: #000; }
+.dchips .dstat, .hos__status .dstat { height: 22px; padding: 0 9px 0 6px; border: 1px solid var(--d-line); border-radius: 999px; background: #fff; }
+.hos__status .dstat { height: 24px; padding-right: 10px; }
+
+/* ---------- Communication history: Add button, last-location rows ------------- */
+.cadd {
+  display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 32px; margin: 14px 0 0;
+  border: 1px dashed var(--d-blue-bd); border-radius: 8px; background: var(--d-blue-bg); font-size: 12px; font-weight: 600; color: var(--d-blue);
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.cadd svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.cadd:hover { background: var(--d-blue); border-color: var(--d-blue); color: #fff; }
+.locmeta { display: grid; margin: 10px 0 0; padding: 0; border: 1px solid var(--d-line); border-radius: 8px; background: #fff; overflow: hidden; }
+.locmeta > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border-top: 1px dashed var(--d-line); font-size: 12px; }
+.locmeta > div:first-child { border-top: 0; }
+.locmeta dt { color: var(--d-muted); }
+.locmeta dd { margin: 0; font-weight: 500; color: var(--d-ink); }
+.locmeta__prov { display: inline-flex; align-items: center; gap: 6px; }
+.locmeta__prov svg { width: 12px; height: 12px; fill: none; stroke: var(--d-blue); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- truck / trailer cards: expandable, no copy ------------------------ */
+.dunit { display: block; padding: 0; }
+.dunit__head { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px; border: 0; border-radius: 12px; background: none; text-align: left; }
+.dunit__chev { flex: 0 0 auto; width: 14px; height: 14px; margin-left: auto; fill: none; stroke: var(--d-muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .18s ease; }
+.dunit.is-open { grid-column: 1 / -1; border-color: var(--d-blue-bd); }
+.dunit.is-open .dunit__chev { transform: rotate(180deg); }
+.dunit__more { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; margin: 0; padding: 0 12px 6px; border-top: 1px solid var(--d-soft); }
+.dunit__more > div { display: flex; flex-direction: column; gap: 1px; padding: 8px 0; border-bottom: 1px dashed var(--d-line); }
+.dunit__more > div:nth-last-child(-n+2) { border-bottom: 0; }
+.dunit__more dt { font-size: 11px; line-height: 14px; color: var(--d-muted); }
+.dunit__more dd { margin: 0; font-size: 12px; line-height: 16px; font-weight: 600; color: var(--d-ink); overflow-wrap: anywhere; }
+
+/* ---------- files + images: one card format, with the stop ------------------- */
+.frow__tags { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.fstop { padding: 2px 8px; border-radius: 999px; background: var(--d-blue-bg); border: 1px solid var(--d-blue-bd); font-size: 10px; font-weight: 700; color: var(--d-blue); white-space: nowrap; }
+.fbadge--blue { background: var(--d-soft); color: var(--d-body); }
+.frow__type--img { position: relative; overflow: hidden; padding: 0; color: var(--d-blue); }
+.frow__type--img svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.frow__type--img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* ---------- load details ------------------------------------------------------ */
+.details .loadcard__id::before { content: none; }
+.details .loadcard__head { flex-direction: row; align-items: center; justify-content: space-between; }
+.details .loadcard__id { font-size: 13px; font-weight: 600; color: var(--d-ink); letter-spacing: -.005em; }
+
+.lsteps { position: relative; display: flex; justify-content: space-between; margin: 14px 0 2px; padding: 0 4px; list-style: none; }
+.lsteps::before { content: ""; position: absolute; left: 20px; right: 20px; top: 11px; height: 2px; border-radius: 1px; background: var(--d-blue-bd); }
+.lsteps li { position: relative; z-index: 1; display: flex; }
+.lstep { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 44px; padding: 0; border: 0; background: none; }
+.lstep__dot {
+  display: grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 999px;
+  border: 1.5px solid var(--d-blue-bd); background: #fff; font-size: 10px; font-weight: 700; color: var(--d-blue);
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.lstep--done .lstep__dot { background: var(--d-blue); border-color: var(--d-blue); color: #fff; }
+.lstep--now .lstep__dot { border-color: var(--d-blue); box-shadow: 0 0 0 3px rgba(15,111,255,.16); }
+.lstep--next .lstep__dot { border-color: var(--d-line); color: var(--d-muted); }
+.lstep:hover .lstep__dot { background: var(--d-blue-bg); border-color: var(--d-blue); color: var(--d-blue); }
+.lstep--done:hover .lstep__dot { background: var(--d-blue-dk); color: #fff; }
+.lstep__city { max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; line-height: 12px; font-weight: 500; color: var(--d-muted); }
+
+.stops__tag { font-size: 10px; line-height: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.stops__tag--live { color: var(--d-blue); }
+.stops__tag--drop { color: var(--d-amber); }
+
+.details .lddetails .kv dt { color: var(--d-ink); font-weight: 500; }
+.details .lddetails .kv dd { color: var(--d-muted); font-weight: 400; }
+.details .lddetails .kv dd:hover { color: var(--d-ink); }
+
+/* live tracker */
+.ltrack { margin-top: 14px; border: 1px solid var(--d-line); border-radius: 12px; overflow: hidden; background: #fff; }
+.ltrack__map { position: relative; height: 210px; background: #eef1f4; }
+.ltrack__canvas { position: absolute; inset: 0; z-index: 0; }
+.ltrack__chip {
+  position: absolute; left: 8px; top: 8px; z-index: 5; display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px;
+  border-radius: 999px; background: rgba(255,255,255,.96); box-shadow: 0 1px 5px rgba(16,24,40,.18); font-size: 11px; font-weight: 600; color: var(--d-ink);
+}
+.ltrack__ping { font-weight: 400; color: var(--d-muted); }
+.ltrack__ping:not(:empty)::before { content: "·"; margin-right: 6px; }
+.ltrack__pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--d-green-pt); animation: dpulse 1.8s ease-out infinite; }
+.ltrack__chip--scheduled .ltrack__pulse { background: var(--d-amber-pt); animation: none; }
+.ltrack__chip--delivered .ltrack__pulse { background: var(--d-blue); animation: none; }
+.ltrack__ctrls { position: absolute; right: 8px; top: 8px; z-index: 5; display: flex; flex-direction: column; gap: 4px; }
+.ltrack__btn { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 8px; background: #fff; box-shadow: 0 1px 5px rgba(16,24,40,.2); color: var(--d-body); transition: background .15s ease, color .15s ease; }
+.ltrack__btn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ltrack__btn:hover { background: var(--d-blue-bg); color: var(--d-blue); }
+.ltrack__body { display: flex; flex-direction: column; gap: 12px; padding: 12px; }
+.ltrack__where { display: flex; align-items: center; gap: 10px; margin: 0; }
+.ltrack__whereic { display: grid; place-items: center; flex: 0 0 auto; width: 32px; height: 32px; padding: 7px; border-radius: 10px; background: var(--d-blue-bg); border: 1px solid var(--d-blue-bd); color: var(--d-blue); }
+.ltrack__whereic svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ltrack__where > span:last-child { display: flex; flex-direction: column; min-width: 0; }
+.ltrack__where b { font-size: 12px; line-height: 16px; font-weight: 600; color: var(--d-ink); }
+.ltrack__where small { font-size: 11px; line-height: 14px; color: var(--d-muted); }
+.ltrack__bar { padding: 4px 11px 16px; }
+.ltrack__rail { position: relative; height: 6px; border-radius: 3px; background: var(--d-soft); }
+.ltrack__fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--d-blue); transition: width 1s linear; }
+.ltrack__tick { position: absolute; top: 12px; transform: translateX(-50%); font-size: 10px; font-weight: 600; color: var(--d-muted); }
+.ltrack__rig {
+  position: absolute; top: 50%; z-index: 2; width: 24px; height: 24px; margin: -12px 0 0 -12px; padding: 5px; border-radius: 50%;
+  background: var(--d-blue); color: #fff; border: 2px solid #fff; box-shadow: 0 1px 5px rgba(15,111,255,.45); transition: left 1s linear;
+}
+.ltrack__rig svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ltrack__stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--d-line); border-radius: 9px; overflow: hidden; }
+.ltrack__stat { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-left: 1px solid var(--d-line); min-width: 0; }
+.ltrack__stat:first-child { border-left: 0; }
+.ltrack__stat small { font-size: 10px; line-height: 12px; color: var(--d-muted); }
+.ltrack__stat b { font-size: 12px; line-height: 16px; font-weight: 600; color: var(--d-ink); }
+
+/* map markers (Leaflet divIcons) */
+.lt-pin, .lt-truck { background: none; border: 0; }
+.lt-pin span {
+  display: grid; place-items: center; width: 24px; height: 24px; box-sizing: border-box; border-radius: 50%; background: #fff; border: 2px solid #0F6FFF;
+  font: 700 10px/1 'Inter', system-ui, sans-serif; color: #0F6FFF; box-shadow: 0 1px 4px rgba(16,24,40,.28);
+}
+.lt-pin span.is-end { background: #0F6FFF; color: #fff; }
+.lt-pin--sm span { width: 22px; height: 22px; font-size: 9px; }
+.lt-truck { position: relative; }
+.lt-truck__ring { position: absolute; inset: 0; border-radius: 50%; background: rgba(15,111,255,.3); animation: ltpulse 1.8s ease-out infinite; }
+.lt-truck__dot { position: absolute; inset: 4px; display: grid; place-items: center; border-radius: 50%; background: #0F6FFF; border: 2px solid #fff; box-shadow: 0 1px 5px rgba(15,111,255,.5); }
+.lt-truck__dot svg { width: 14px; height: 14px; fill: none; stroke: #fff; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+@keyframes ltpulse { 0% { transform: scale(.55); opacity: .9; } 100% { transform: scale(1.4); opacity: 0; } }
+.leaflet-container { font-family: inherit; background: #eef1f4; }
+.leaflet-tile-pane { filter: saturate(.6) brightness(1.04) contrast(.96); }
+/* the page-wide svg { width:100%; height:100% } would collapse Leaflet's vector layer to nothing */
+.leaflet-overlay-pane svg { width: auto; height: auto; }
+.leaflet-container .leaflet-control-attribution { font-size: 9px; background: rgba(255,255,255,.75); }
+
+/* ---------- documents: centred, not a bottom sheet ----------------------------- */
+.docsheet {
+  position: fixed; inset: 0; z-index: 60; width: min(1040px, 92vw); height: fit-content; max-height: 80vh; margin: auto;
+  border: 1px solid var(--c-line); border-radius: 14px; overflow: hidden;
+  box-shadow: 0 0 0 100vmax rgba(16,24,40,.38), 0 24px 64px rgba(16,24,40,.28);
+}
+
+/* ---------- Shipment Location History: real map -------------------------------- */
+.tracking__leaflet { position: absolute; inset: 0; z-index: 0; }
+.tracking__mapsearch, .tracking__zoom, .tracking__etacard { z-index: 500; }
+.tracking__zoom { bottom: 116px; }
+.trk-popup .leaflet-popup-content-wrapper { border-radius: 10px; box-shadow: 0 6px 20px rgba(16,24,40,.2); }
+.trk-popup .leaflet-popup-content { display: flex; flex-direction: column; gap: 3px; margin: 9px 12px; font-size: 12px; line-height: 16px; color: #101828; white-space: nowrap; }
+.trk-popup .leaflet-popup-content b { font-weight: 600; }
+.trk-popup .leaflet-popup-content span { color: #6A7282; }
+.trk-popup .leaflet-popup-content .dstat { color: #364153; }
+
+/* ---------- Command Center sidebar forms --------------------------------------- */
+.ccctx { display: flex; align-items: center; gap: 7px; margin: 0; padding: 7px 10px; border: 1px solid var(--d-blue-bd); border-radius: 8px; background: var(--d-blue-bg); font-size: 11px; color: var(--d-body); }
+.ccctx svg { width: 13px; height: 13px; fill: none; stroke: var(--d-blue); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ccctx b { font-weight: 700; color: var(--d-blue); }
+.ccintro { margin: 0; font-size: 12px; line-height: 17px; color: var(--d-muted); }
+.ccsec { margin: 6px 0 -2px; font-size: 10px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--d-faint); }
+.ccrows { display: grid; grid-template-columns: auto 1fr; margin: 0; font-size: 12px; }
+.ccrows dt, .ccrows dd { margin: 0; padding: 7px 0; border-bottom: 1px dashed var(--d-line); }
+.ccrows dt { padding-right: 14px; color: var(--d-muted); }
+.ccrows dd { text-align: right; font-weight: 500; color: var(--d-ink); }
+.ccrows dt:last-of-type, .ccrows dd:last-of-type { border-bottom: 0; }
+.ccchecks { display: flex; flex-direction: column; gap: 9px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.ccchecks legend { padding: 0; margin-bottom: 8px; font-size: 11px; font-weight: 500; color: var(--d-body); }
+.ccchecks .check { font-size: 12px; font-weight: 400; color: var(--d-ink); }
+.ccpair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ccpair > .field { min-width: 0; }
+.ccfoot { display: flex; gap: 8px; }
+.ccfoot .btn { flex: 1; }
+.cclink { display: inline-flex; align-items: center; align-self: flex-start; gap: 6px; font-size: 12px; font-weight: 600; color: var(--d-blue); }
+.cclink svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.cclink:hover { text-decoration: underline; }
+.ccseg { margin: 0; }
+.ccresults { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid var(--d-soft); }
+.ccresults__head { margin: 0; font-size: 12px; font-weight: 600; color: var(--d-ink); }
+.ccunit { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border: 1px solid var(--d-line); border-radius: 10px; background: #fff; transition: background .15s ease, border-color .15s ease; }
+.ccunit:hover { background: var(--d-blue-bg); border-color: var(--d-blue-bd); }
+.ccunit .dunit__tile { flex: 0 0 auto; }
+.ccunit__body { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; flex: 1; min-width: 0; }
+.ccunit__body b { font-size: 12px; font-weight: 700; color: var(--d-ink); }
+.ccunit__body small { font-size: 11px; color: var(--d-muted); }
+.ccunit__body .dbadge { height: 18px; margin-top: 2px; font-size: 10px; letter-spacing: 0; text-transform: none; }
+.ccstats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ccstat { display: flex; flex-direction: column; gap: 2px; padding: 9px 10px; border: 1px solid var(--d-line); border-radius: 9px; background: #fff; min-width: 0; }
+.ccstat small { font-size: 10px; line-height: 12px; color: var(--d-muted); }
+.ccstat b { font-size: 13px; font-weight: 700; color: var(--d-ink); }
+.cctx { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; border: 1px solid var(--d-line); border-radius: 9px; overflow: hidden; background: #fff; }
+.cctx li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 8px 10px; border-top: 1px solid var(--d-soft); font-size: 12px; }
+.cctx li:first-child { border-top: 0; }
+.cctx li > span:first-child { display: flex; flex-direction: column; min-width: 0; }
+.cctx b { font-weight: 600; color: var(--d-ink); }
+.cctx small { font-size: 11px; color: var(--d-muted); }
+.cctx__st { font-size: 11px; font-weight: 600; color: var(--d-muted); }
+.cctx__amt { font-weight: 700; color: var(--d-ink); }
+.ccdone { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px 14px; text-align: center; border: 1px solid var(--d-line); border-radius: 10px; background: #fff; }
+.ccdone__ic { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--d-green-bg); border: 1px solid var(--d-green-bd); color: var(--d-green); }
+.ccdone__ic svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.ccdone h4 { margin: 0; font-size: 14px; font-weight: 600; color: var(--d-ink); }
+.ccdone p { margin: 0; font-size: 12px; color: var(--d-muted); }
+.ccdone__list { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 4px 0 8px; padding: 0; list-style: none; }
+.ccdone__list li { padding: 3px 9px; border: 1px solid var(--d-blue-bd); border-radius: 999px; background: var(--d-blue-bg); font-size: 11px; font-weight: 600; color: var(--d-blue); }
+/* narrower details column (316px): a slightly smaller photo so the name keeps one line */
+@media (max-width: 1400px) {
+  .ltrack__stats { grid-template-columns: .9fr 1.4fr .9fr; }
+}
 </style>
 </head>
 <body>
@@ -2715,7 +2957,12 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
   <!-- ── details column: four swappable views ── -->
   <aside class="details" id="details" aria-labelledby="details-heading">
     <header class="details__head">
-      <h2 id="details-heading" data-role="details-title">Details</h2>
+      <div class="details__title">
+        <button type="button" class="icon-btn details__back" data-action="details-back" aria-label="Back" hidden>
+          <svg viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg>
+        </button>
+        <h2 id="details-heading" data-role="details-title">Details</h2>
+      </div>
       <button type="button" class="icon-btn" data-action="close-details" aria-label="Close panel" aria-controls="details" aria-expanded="true">
         <svg viewBox="0 0 24 24"><path d="M6 6 18 18M18 6 6 18"/></svg>
       </button>
@@ -2834,6 +3081,7 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
            Service, Driver & equipment, Load Details, Files & Images). -->
       <section class="view" data-view="details">
         <div class="card card--hero">
+          <button type="button" class="hero__expand" data-action="expand-all" aria-pressed="false"><span>Expand all</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button>
           <div class="hero__col">
             <span class="avatar avatar--83" data-role="card-avatar" data-initials="MS" aria-hidden="true"></span>
             <h3 class="card__name">
@@ -2901,7 +3149,7 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
         <section class="acc" data-acc="comms">
           <button type="button" class="acc__head" aria-expanded="false" aria-controls="acc-comms">
             <span class="dhead__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></span>
-            <span class="dhead__text"><h4>Communication history</h4><p>Calls, messages, documents and check calls</p></span>
+            <span class="dhead__text"><h4>Communication history</h4><p>Calls and messages</p></span>
             <svg class="acc__chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
           </button>
           <div class="acc__body" id="acc-comms" hidden>
@@ -2909,19 +3157,15 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
               <button type="button" data-filter="all" aria-pressed="true">All</button>
               <button type="button" data-filter="msg" aria-pressed="false">Messages</button>
               <button type="button" data-filter="call" aria-pressed="false">Calls</button>
-              <button type="button" data-filter="doc" aria-pressed="false">Docs</button>
-              <button type="button" data-filter="check" aria-pressed="false">Check calls</button>
             </div>
             <ol class="ctl" role="list">
               <li data-type="msg" data-tone="blue"><span class="ctl__ic"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg></span><div><p class="ctl__head"><b>Micheal Scott</b><time>1:08 PM</time></p><p>Rolling out of Beckley, 8 pallets off. Heading to Columbus.</p></div></li>
-              <li data-type="doc" data-tone="purple"><span class="ctl__ic"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg></span><div><p class="ctl__head"><b>Document received</b><time>1:09 PM</time></p><p>Delivery receipt · Beckley (2 pages) from the driver app</p></div></li>
-              <li data-type="check" data-tone="orange"><span class="ctl__ic"><svg viewBox="0 0 24 24"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg></span><div><p class="ctl__head"><b>Departed stop 2</b><time>1:05 PM</time></p><p>Food Lion DC, Beckley, WV · geofence exit</p></div></li>
               <li data-type="all" data-tone="red"><span class="ctl__ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7"/><path d="M12 9v4l2 2M10 3h4"/></svg></span><div><p class="ctl__head"><b>Detention started</b><time>12:00 PM</time></p><p>Free time ended at Food Lion DC (2h from 10:00 AM appointment)</p></div></li>
               <li data-type="call" data-tone="green"><span class="ctl__ic"><svg viewBox="0 0 24 24"><path d="M6 3h3l2 5-2.5 1.5a12 12 0 0 0 6 6L16 13l5 2v3a3 3 0 0 1-3 3A15 15 0 0 1 3 6a3 3 0 0 1 3-3Z"/></svg></span><div><p class="ctl__head"><b>Outbound call · 4m 12s</b><time>11:05 AM</time></p><p>Lacy Harris → Micheal Scott · confirmed dock 18 at Kroger</p></div></li>
-              <li data-type="check" data-tone="orange"><span class="ctl__ic"><svg viewBox="0 0 24 24"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg></span><div><p class="ctl__head"><b>Arrived stop 2</b><time>9:48 AM</time></p><p>Food Lion DC, Beckley, WV · geofence entry · 12 min early</p></div></li>
               <li data-type="msg" data-tone="blue"><span class="ctl__ic"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg></span><div><p class="ctl__head"><b>Jordan Pike · Summit Freight</b><time>9:20 AM</time></p><p>Receiver confirmed the 5–7 PM window for Columbus.</p></div></li>
               <li data-type="all" data-tone="slate"><span class="ctl__ic"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg></span><div><p class="ctl__head"><b>Status changed</b><time>7:24 AM</time></p><p>Loaded → In transit (auto from ELD)</p></div></li>
             </ol>
+            <button type="button" class="cadd" data-action="comm-add"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-role="comm-add-label">Add communication</span></button>
             <ul class="members" role="list" data-role="members" hidden></ul>
           </div>
         </section>
@@ -2929,7 +3173,7 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
         <section class="acc" data-acc="location">
           <button type="button" class="acc__head" aria-expanded="false" aria-controls="acc-location">
             <span class="dhead__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg></span>
-            <span class="dhead__text"><h4>Last Location</h4><p>Most recent ELD ping</p></span>
+            <span class="dhead__text"><h4>Last Location</h4><p>Most recent ELD ping · Samsara</p></span>
             <svg class="acc__chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
           </button>
           <div class="acc__body" id="acc-location" hidden>
@@ -2938,6 +3182,11 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
               <span class="card__loctext"><small>Last location</small><b data-role="card-loc">Roanoke, VA</b></span>
               <button type="button" class="card__locmap" data-action="loc-map">View map</button>
             </p>
+            <dl class="locmeta">
+              <div><dt>Provider</dt><dd data-role="loc-provider"><span class="locmeta__prov"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Samsara</span></dd></div>
+              <div><dt>Date</dt><dd data-role="loc-date">—</dd></div>
+              <div><dt>Time</dt><dd data-role="loc-time">—</dd></div>
+            </dl>
           </div>
         </section>
 
@@ -2996,13 +3245,12 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
                 <span class="dhead__text"><h4>Images</h4><p>Photos shared in this chat</p></span>
                 <button type="button" class="fbtn" data-action="toggle-images" aria-expanded="false">View All</button>
               </header>
-              <ul class="fgrid" role="list" data-role="images"></ul>
+              <ul class="flist" role="list" data-role="images"></ul>
             </div>
             <div class="fpanel" data-fpanel="files" hidden>
               <header class="fhead">
                 <span class="dhead__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg></span>
                 <span class="dhead__text"><h4>Files</h4><p>Documents and attachments</p></span>
-                <button type="button" class="fbtn" data-action="request-file">Request <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button>
               </header>
               <ul class="flist" role="list" data-role="files"></ul>
               <button type="button" class="fdash" data-action="toggle-files" aria-expanded="false">Show all files</button>
@@ -3119,6 +3367,7 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
            you're in a member's thread. -->
       <section class="view" data-view="load-details" hidden>
         <div class="card card--hero">
+          <button type="button" class="hero__expand" data-action="expand-all" aria-pressed="false"><span>Expand all</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button>
           <div class="hero__col">
             <span class="avatar avatar--83" data-role="ld-avatar" data-initials="DL" aria-hidden="true"></span>
             <h3 class="card__name"><button type="button" class="link" data-role="ld-id">DTL-876567</button></h3>
@@ -3291,6 +3540,38 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
           <p class="form__foot"><a href="#" class="link">History</a></p>
         </form>
       </section>
+
+      <!-- view: add communication — opened from the Add button inside
+           Communication history; the type follows whichever tab is active. -->
+      <section class="view" data-view="comm-add" hidden>
+        <form class="form" data-role="form-comm">
+          <p class="field">
+            <label for="ca-type">Type</label>
+            <select id="ca-type"><option value="msg">Message</option><option value="call">Call</option></select>
+          </p>
+          <p class="field">
+            <label for="ca-who">Contact</label>
+            <select id="ca-who"><option>Micheal Scott · Driver</option><option>Jordan Pike · Summit Freight</option><option>Lacy Harris · Dispatcher</option></select>
+          </p>
+          <p class="field" data-for="call">
+            <label for="ca-dir">Direction</label>
+            <select id="ca-dir"><option>Outbound</option><option>Inbound</option></select>
+          </p>
+          <p class="field" data-for="call">
+            <label for="ca-dur">Duration</label>
+            <input id="ca-dur" type="text" placeholder="e.g. 4m 12s" autocomplete="off">
+          </p>
+          <p class="field">
+            <label for="ca-text" data-role="ca-text-label">Message</label>
+            <textarea id="ca-text" rows="4" placeholder="Enter"></textarea>
+          </p>
+          <button type="submit" class="btn btn--primary btn--block" data-role="ca-submit">Add message</button>
+        </form>
+      </section>
+
+      <!-- Command Center sidebar forms (Edit load, Repower, Issue funds, BOL,
+           Invoice, Copy load, Toll / fuel, OS&D, Post to loadboard) are built
+           by initCommandForms() below and appended here. -->
 
       <!-- view: personal info — a directory result who isn't an active
            conversation yet (pending connection or not on Prochat). -->
@@ -3529,11 +3810,11 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
     </header>
 
     <div class="tracking__body">
-      <!-- No exportable "map" asset exists in the Figma file — those frames
-           render an actual embedded Google Map, not a screenshot layer — so
-           this is a flat tinted stand-in with faint grid "roads" for the
-           pins/popups to sit on, not a real tile map. -->
+      <!-- Live OpenStreetMap map (Leaflet): the
+           route is the ten ELD pings below, the truck marker is the latest
+           one, and clicking a table row flies the map to that ping. -->
       <div class="tracking__map">
+        <div class="tracking__leaflet" data-role="tracking-leaflet" role="application" aria-label="Shipment location map"></div>
         <label class="tracking__mapsearch">
           <span class="visually-hidden">Search Drivers</span>
           <input type="search" placeholder="Search Drivers">
@@ -3541,31 +3822,12 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
         </label>
 
         <div class="tracking__zoom">
-          <button type="button" class="icon-btn" aria-label="Zoom in"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M11 8v6M8 11h6"/><path d="M16.5 16.5 21 21"/></svg></button>
-          <button type="button" class="icon-btn" aria-label="Zoom out"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M8 11h6"/><path d="M16.5 16.5 21 21"/></svg></button>
+          <button type="button" class="icon-btn" data-action="trk-zoom-in" aria-label="Zoom in"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M11 8v6M8 11h6"/><path d="M16.5 16.5 21 21"/></svg></button>
+          <button type="button" class="icon-btn" data-action="trk-zoom-out" aria-label="Zoom out"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M8 11h6"/><path d="M16.5 16.5 21 21"/></svg></button>
+          <button type="button" class="icon-btn" data-action="trk-fit" aria-label="Fit route"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
         </div>
 
-        <div class="pin pin--extra" data-role="tracking-extra-pin" hidden>
-          <span class="pin__dot"></span>
-          <div class="pin__card">
-            <span class="pin__title">Location</span>
-            <span data-role="tracking-extra-loc"></span>
-            <span class="pill pill--live">Driving</span>
-          </div>
-        </div>
-
-        <div class="pin pin--live">
-          <span class="pin__dot"></span>
-          <div class="pin__card">
-            <span class="pin__title">Location</span>
-            <span>Route 66 <time>04:00 PM</time></span>
-            <span class="pill pill--live">Driving</span>
-          </div>
-        </div>
-
-        <div class="tracking__driverpin">
-          <span class="tracking__pinavatar" data-role="tracking-avatar" aria-hidden="true"></span>
-        </div>
+        <span class="tracking__pinavatar" data-role="tracking-avatar" aria-hidden="true" hidden></span>
 
         <div class="tracking__etacard">
           <span class="tracking__etamins">12<small>Min</small></span>
@@ -3576,13 +3838,12 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
               <span>DTL88</span>
             </p>
             <p class="tracking__etarow tracking__etarow--meta">
-              <span class="pill pill--live">D&nbsp;Driving</span>
+              <span class="dstat"><span class="duty d-D">D</span>Driving</span>
               <span>ETA: 4:00 PM</span>
             </p>
           </div>
         </div>
 
-        <p class="tracking__mapfoot">Map data ©2024 Google &nbsp;·&nbsp; Terms &nbsp;·&nbsp; Report a map error</p>
       </div>
 
       <aside class="tracking__panel">
@@ -4278,57 +4539,54 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
     }]
   };
 
-  /* Accordion content behind "View More Details" — keyed by load id so every
-     load card (Current, each Upcoming, Historic) expands independently.
-     DAT4 - 76987's rows are the exact content captured from the reference
-     recording. The other loads reuse the same section pattern with values
-     built from their own origin/destination — that inner detail was never
-     clicked during either recording, so treat it as a reasonable placeholder
-     consistent with the app's data shape rather than a captured design. */
+  /* The sections under every load card, always drawn opened. Total Quality
+     Logistics is the customer, so the row says so. The Fairfield → Roanoke
+     run carries two extra drops between Stop 1 and Stop 99 (Cleveland and
+     Chatham) — those are the nodes the 1 → 99 line draws. Load Pay has no
+     commodity or temperature, and Mileage lists empty miles first with no
+     rating. DAT4 - 76987's rows are the content captured from the reference
+     recording; the other loads reuse the same pattern with their own cities. */
+  const customerSection = (no, ext = true) => ({ id:"tql", title:"Customer: Total Quality Logistics", rows:[
+    ["Load No.", no], ["Representative", "Stan Lee"], ["Phone", "(800) 531-8090"],
+    ...(ext ? [["Ext.", "x87162"]] : []), ["Prochat", "Chat"] ] });
+  const paySection = (full = true) => ({ id:"pay", title:"Load Pay", rows: full
+    ? [["Delivery Number", "174AB"], ["Load Type", "Full Truck"], ["Gross Weight", "12,000 lb"], ["Load Value", "$ 100,000"]]
+    : [["Load Type", "Full Truck"], ["Gross Weight", "—"], ["Load Value", "—"]] });
+  const mileageSection = (empty = "118", loaded = "2,742") => ({ id:"mileage", title:"Mileage", rows:[
+    ["Empty Miles", empty], ["Loaded Miles", loaded] ] });
+  const extraStopSections = () => [
+    { id:"stop02", title:"Stop 02: Cleveland, OH", flag:"📕", rows:[
+      ["Type", "Drop · Delivery"], ["Pickup Type", "FCFS"], ["Consignee", "Cocacola Distribution"] ] },
+    { id:"stop03", title:"Stop 03: Chatham, NJ", flag:"📕", rows:[
+      ["Type", "Drop · Delivery"], ["Pickup Type", "FCFS"], ["Consignee", "Chatham Distribution"] ] },
+    { id:"stop99", title:"Stop 99: Roanoke, VA", flag:"🚚", rows:[
+      ["Type", "Drop"], ["Status", "In Transit (Stop 99)"], ["ETA", "Mar 16 11:00 AM"] ] }
+  ];
   const LOAD_ACCORDION = {
     "DAT4 - 76987": [
-      { id:"tql", title:"Total Quality Logistics", rows:[
-        ["Load No.", "TQL905471-GE"], ["Representative", "Stan Lee"],
-        ["Phone", "(800) 531-8090"], ["Ext.", "x87162"], ["Prochat", "Chat"] ] },
+      customerSection("TQL905471-GE"),
       { id:"stop01", title:"Stop 01: Fairfield, CA", flag:"📄", rows:[
         ["Type", "Live · Delivery"], ["Pickup Type", "Appointment"],
         ["Appointment Time", "07/08/2023 08:00 AM"], ["Consignee", "Michaels Retail Giant"],
         ["Arrived", "07/06/2023 08:00 AM"], ["Departed", "07/06/2023 2:45 PM"], ["Dwell Time", "6hr 45mm"] ] },
-      { id:"stop02", title:"Stop 02: Chatham, NJ", flag:"📕", rows:[
-        ["Type", "Drop · Delivery"], ["Pickup Type", "FCFS"], ["Consignee", "Chatham Distribution"] ] },
-      { id:"stop99", title:"Stop 99: Roanoke, VA", flag:"🚚", rows:[
-        ["Type", "Drop"], ["Status", "In Transit (Stop 99)"], ["ETA", "Mar 16 11:00 AM"] ] },
-      { id:"pay", title:"Load Pay", rows:[
-        ["Delivery Number", "174AB"], ["Load Type", "Full Truck"], ["Gross Weight", "12,000 lb"],
-        ["Load Value", "$ 100,000"], ["Commodity", "Aluminum Cans"], ["Temperature", "Not Applicable"] ] },
-      { id:"mileage", title:"Mileage & Rating", rows:[
-        ["Loaded Miles", "2,742"], ["Empty Miles", "118"], ["Rating", "4.8 / 5"] ] }
+      ...extraStopSections(),
+      paySection(), mileageSection()
     ]
   };
 
   /* Loads opened from the Loads channel carry the full breakdown the frame
-     shows behind "View More Details" — the same six sections as the person's
-     current load, including the middle stop and Stop 99, with this load's own
-     number in the broker row. Built per load number rather than hardcoded so
-     every row in the register expands to something real. */
+     shows — the same sections as the person's current load, with this load's
+     own number in the customer row. Built per load number rather than
+     hardcoded so every row in the register opens something real. */
   function channelLoadAccordion(no) {
     return [
-      { id:"tql", title:"Total Quality Logistics", rows:[
-        ["Load No.", no], ["Representative", "Stan Lee"],
-        ["Phone", "(800) 531-8090"], ["Ext.", "x87162"], ["Prochat", "Chat"] ] },
+      customerSection(no),
       { id:"stop01", title:"Stop 01: Fairfield, CA", flag:"📄", rows:[
         ["Type", "Live · Pickup"], ["Pickup Type", "Appointment"],
         ["Appointment Time", "Mar 15 08:00 AM"], ["Consignee", "Michaels Retail Giant"],
         ["Arrived", "Mar 15 07:40 AM"], ["Departed", "Mar 15 09:15 AM"], ["Dwell Time", "1hr 35mm"] ] },
-      { id:"stop02", title:"Stop 02: Chatham, NJ", flag:"📕", rows:[
-        ["Type", "Drop · Delivery"], ["Pickup Type", "FCFS"], ["Consignee", "Chatham Distribution"] ] },
-      { id:"stop99", title:"Stop 99: Roanoke, VA", flag:"🚚", rows:[
-        ["Type", "Drop"], ["Status", "In Transit (Stop 99)"], ["ETA", "Mar 16 11:00 AM"] ] },
-      { id:"pay", title:"Load Pay", rows:[
-        ["Delivery Number", "174AB"], ["Load Type", "Full Truck"], ["Gross Weight", "12,000 lb"],
-        ["Load Value", "$ 100,000"], ["Commodity", "Aluminum Cans"], ["Temperature", "Not Applicable"] ] },
-      { id:"mileage", title:"Mileage & Rating", rows:[
-        ["Loaded Miles", "2,742"], ["Empty Miles", "118"], ["Rating", "4.8 / 5"] ] }
+      ...extraStopSections(),
+      paySection(), mileageSection()
     ];
   }
   function accordionFor(load) {
@@ -4338,16 +4596,12 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
        only covered the loads present at start-up. */
     if (CHANNEL_LOADS.some((l) => l.no === load.id)) return channelLoadAccordion(load.id);
     return [
-      { id:"tql", title:"Total Quality Logistics", rows:[
-        ["Load No.", load.id], ["Representative", "Stan Lee"], ["Phone", "(800) 531-8090"], ["Prochat", "Chat"] ] },
+      customerSection(load.id, false),
       { id:"stop01", title:"Stop 01: " + load.origin.city, flag:"📄", rows:[
         ["Type", load.origin.tag + " · Pickup"], ["Pickup Type", "Appointment"], ["Appointment Time", load.origin.when] ] },
-      { id:"stop02", title:"Stop 02: " + load.dest.city, flag:"🚚", rows:[
+      { id:"stop99", title:"Stop 99: " + load.dest.city, flag:"🚚", rows:[
         ["Type", load.dest.tag + " · Delivery"], ["Status", load.status], ["ETA", load.dest.when] ] },
-      { id:"pay", title:"Load Pay", rows:[
-        ["Load Type", "Full Truck"], ["Gross Weight", "—"], ["Load Value", "—"], ["Commodity", "—"] ] },
-      { id:"mileage", title:"Mileage & Rating", rows:[
-        ["Loaded Miles", "—"], ["Empty Miles", "—"], ["Rating", "—"] ] }
+      paySection(false), mileageSection("—", "—")
     ];
   }
 
@@ -4485,19 +4739,25 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
     person:    '<circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>'
   };
 
+  /* Images and files share one card format; every card names the stop it
+     belongs to (Stop 1, 2, 3 or 99 on the 1 → 99 line). */
   const IMAGES = [
-    { kind: "invoice", src: IMG_INVOICE }, { kind: "photo", src: IMG_PHOTO },
-    { kind: "teal", src: IMG_TEAL }, { kind: "violet", src: IMG_VIOLET },
-    { kind: "invoice", src: IMG_INVOICE }, { kind: "photo", src: IMG_PHOTO },
-    { kind: "teal", src: IMG_TEAL }, { kind: "violet", src: IMG_VIOLET }
+    { name:"Invoice scan · Fairfield",   meta:"From Micheal · 7:12 AM · JPG",  stop:"Stop 1",  src: IMG_INVOICE },
+    { name:"Dock photo · Fairfield",     meta:"From Micheal · 8:20 AM · JPG",  stop:"Stop 1",  src: IMG_PHOTO },
+    { name:"Seal photo · Cleveland",     meta:"From Micheal · 11:05 AM · JPG", stop:"Stop 2",  src: IMG_TEAL },
+    { name:"Pallet photo · Chatham",     meta:"From Micheal · 1:30 PM · JPG",  stop:"Stop 3",  src: IMG_VIOLET },
+    { name:"Delivery photo · Roanoke",   meta:"From Micheal · 9:42 AM · JPG",  stop:"Stop 99", src: IMG_PHOTO },
+    { name:"Receipt scan · Roanoke",     meta:"From Micheal · 9:48 AM · JPG",  stop:"Stop 99", src: IMG_INVOICE },
+    { name:"Trailer photo · Cleveland",  meta:"From Micheal · 11:12 AM · JPG", stop:"Stop 2",  src: IMG_VIOLET },
+    { name:"Dock photo · Chatham",       meta:"From Micheal · 1:36 PM · JPG",  stop:"Stop 3",  src: IMG_TEAL }
   ];
   const FILES = [
-    { name:"Rate confirmation",          meta:"Summit Freight · signed Jul 30", status:"Signed" },
-    { name:"Bill of lading · Salem",     meta:"From Micheal · 7:30 AM · 2 pages", status:"Received" },
-    { name:"Delivery receipt · Beckley", meta:"From Micheal · 1:09 PM", status:"Received" },
-    { name:"Lumper receipt · Beckley",   meta:"Comchek CK-77120 · 1:10 PM", status:"Received" },
-    { name:"Proof of delivery · Salem",  meta:"From Micheal · 8:02 AM", status:"Received" },
-    { name:"Detention form",             meta:"Food Lion DC · 12:15 PM", status:"Received" }
+    { name:"Rate confirmation",          meta:"Summit Freight · signed Jul 30", status:"Signed",   stop:"Stop 1" },
+    { name:"Bill of lading · Fairfield", meta:"From Micheal · 7:30 AM · 2 pages", status:"Received", stop:"Stop 1" },
+    { name:"Delivery receipt · Cleveland", meta:"From Micheal · 1:09 PM",       status:"Received", stop:"Stop 2" },
+    { name:"Lumper receipt · Chatham",   meta:"Comchek CK-77120 · 1:10 PM",     status:"Received", stop:"Stop 3" },
+    { name:"Proof of delivery · Roanoke", meta:"From Micheal · 8:02 AM",        status:"Received", stop:"Stop 99" },
+    { name:"Detention form",             meta:"Food Lion DC · 12:15 PM",        status:"Received", stop:"Stop 2" }
   ];
   const ROOM_MEMBERS = [
     { name:"Dwight Schrute", role:"Driver",       time:"01:20 PM" },
@@ -4655,7 +4915,7 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
   const HOS_BY = {
     michael: HOS,
     philip: {
-      dutyCode: "SB", duty: "Sleeper berth",
+      dutyCode: "SB", duty: "Sleeper Birth",
       availTomorrow: "62h 30m",
       note: { tone: "rest", title: "Resting in the sleeper berth", text: "Clocks are paused. The next drive window opens once the 10-hour reset completes." },
       rings: [
@@ -4749,7 +5009,6 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
   const doctableBody = $('[data-role="doctable-body"]');
   const trackingEl = $('[data-role="tracking"]');
   const trackingTableBody = $('[data-role="tracking-table-body"]');
-  const trackingExtraPin = $('[data-role="tracking-extra-pin"]');
   const statusCard = $('[data-role="status-card"]');
   const meMenuBtn  = $(".me__menu");
   const meAvatarEl = $('[data-role="me-avatar"]');
@@ -6574,15 +6833,41 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
     $(".main").dataset.tabs = mainTabsEl.hidden ? "off" : "on";
   }
 
+  /* Sidebar forms (Share Tracking, the Command Center flows, …) get a back
+     arrow in the header that returns to the view they were opened from. */
+  const SUBVIEWS = new Set(["share-tracking", "request-document", "request-location", "comm-add"]);
+  const isSubview = (v) => SUBVIEWS.has(v) || v.startsWith("cc-");
+
   function setView(view) {
+    if (isSubview(view) && !isSubview(state.view)) state.backTo = state.view;
     state.view = view;
-    detailsTitle.textContent = VIEW_TITLE[view];
+    detailsTitle.textContent = VIEW_TITLE[view] || "Details";
     $$(".view").forEach((v) => { v.hidden = v.dataset.view !== view; });
+    const back = $('[data-action="details-back"]');
+    if (back) back.hidden = !isSubview(view);
+    const sc = $('[data-role="details-scroll"]');
+    if (sc) sc.scrollTop = 0;
     closeMenu();
     closeHos();
   }
 
+  /* Back from a sidebar form: to the view that opened it. */
+  function leaveSubview() {
+    const to = state.backTo && !isSubview(state.backTo) ? state.backTo : "details";
+    setView(to);
+  }
+
   const LOAD_TAB_LABEL = { current: "Current", upcoming: "Upcoming", historic: "Historic" };
+
+  /* A section's open state is flipped in place (no re-render) so the live map
+     above it keeps running. */
+  function setAccKey(wrap, key, open, scroll) {
+    open ? state.accOpen.add(key) : state.accOpen.delete(key);
+    wrap.querySelector(".acc__btn").setAttribute("aria-expanded", String(open));
+    const host = wrap.closest(".lddetails");
+    if (host) host.dispatchEvent(new Event("accsync"));
+    if (open && scroll) revealInPanel(wrap);
+  }
 
   function accordion(load, section) {
     const key = load.id + "::" + section.id;
@@ -6601,13 +6886,243 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
       section.flag ? el("span", { className: "acc__flag", textContent: section.flag }) : null,
       svg('<path d="m6 9 6 6 6-6"/>')
     ]);
-    btn.addEventListener("click", () => {
-      state.accOpen.has(key) ? state.accOpen.delete(key) : state.accOpen.add(key);
-      renderLoadPanelActive();
-    });
-
-    return el("section", { className: "acc" }, [btn, body]);
+    const wrap = el("section", { className: "acc", "data-acckey": key }, [btn, body]);
+    btn.addEventListener("click", () => setAccKey(wrap, key, !state.accOpen.has(key), true));
+    return wrap;
   }
+
+  /* Stops on a load, read from its accordion sections ("Stop 02: Chatham, NJ"
+     becomes number 2, city "Chatham, NJ"), in route order with Stop 99 last. */
+  function stopsOf(sections) {
+    return sections.filter((s) => /^stop/.test(s.id)).map((s) => {
+      const m = /^Stop (\d+): (.+)$/.exec(s.title) || [];
+      return { id: s.id, num: Number(m[1]) || 0, city: m[2] || s.title };
+    }).sort((a, b) => a.num - b.num);
+  }
+
+  /* After a section opens, bring it into view if any of it sits below (or
+     above) the visible part of the panel. */
+  /* A short eased glide, driven by timers rather than the browser's smooth-scroll. */
+  function glidePanel(sc, to) {
+    const from = sc.scrollTop, dist = to - from, t0 = Date.now(), dur = 300;
+    if (!dist) return;
+    (function step() {
+      const t = Math.min(1, (Date.now() - t0) / dur);
+      sc.scrollTop = from + dist * (1 - Math.pow(1 - t, 3));
+      if (t < 1) setTimeout(step, 16);
+    })();
+  }
+  function revealInPanel(node) {
+    const sc = node.closest(".details__scroll");
+    if (!sc) return;
+    setTimeout(() => {
+      const r = node.getBoundingClientRect(), s = sc.getBoundingClientRect();
+      if (r.bottom > s.bottom - 8 || r.top < s.top) {
+        const room = Math.max(0, s.height - r.height - 16);
+        const top = sc.scrollTop + (r.top - s.top) - Math.min(12, room / 2) - 4;
+        glidePanel(sc, Math.max(0, top));
+      }
+    }, 20);
+  }
+
+  /* =====================================================================
+     LIVE LOAD TRACKER — a real map (Leaflet + OpenStreetMap tiles) with
+     the road route through every stop, numbered stop pins and a truck that
+     moves with each ELD ping, plus progress, miles left and ETA underneath.
+     ===================================================================*/
+  const CITY_COORDS = {
+    "Fairfield, CA": [38.2494, -122.0400], "Reno, NV": [39.5296, -119.8138], "Cleveland, OH": [41.4993, -81.6944],
+    "Chatham, NJ": [40.7409, -74.3835], "Roanoke, VA": [37.2710, -79.9414], "Chicago, IL": [41.8781, -87.6298],
+    "Atlanta, GA": [33.7490, -84.3880], "Dallas, TX": [32.7767, -96.7970], "Denver, CO": [39.7392, -104.9903],
+    "Phoenix, AZ": [33.4484, -112.0740], "Memphis, TN": [35.1495, -90.0490], "Newark, NJ": [40.7357, -74.1724],
+    "Seattle, WA": [47.6062, -122.3321], "Detroit, MI": [42.3314, -83.0458], "Lowell, AR": [36.2559, -94.1313],
+    "Eden Prairie, MN": [44.8547, -93.4708]
+  };
+  const LIVE = { progress: {}, routes: {} };
+  const MILE = 1609.344;
+
+  const haversineMi = (a, b) => {
+    const R = 3958.8, rad = (d) => d * Math.PI / 180;
+    const dLat = rad(b[0] - a[0]), dLng = rad(b[1] - a[1]);
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a[0])) * Math.cos(rad(b[0])) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+  };
+
+  /* Where the truck is on its run, as 0 to 1 of the route. Kept across
+     re-renders so the marker never jumps back when the panel repaints. */
+  function liveProgress(id, mode) {
+    if (mode === "scheduled") return 0;
+    if (mode === "delivered") return 1;
+    if (LIVE.progress[id] == null) LIVE.progress[id] = 0.58;
+    return LIVE.progress[id];
+  }
+
+  /* Road route through the stops from the public OSRM router; if it can't be
+     reached the straight legs between the stops stand in so the map still
+     reads. Cached per set of stops. */
+  function fetchRoute(points) {
+    const key = points.map((p) => p.join(",")).join(";");
+    if (LIVE.routes[key]) return LIVE.routes[key];
+    const straight = () => {
+      const miles = points.slice(1).reduce((t, p, i) => t + haversineMi(points[i], p), 0) * 1.18;
+      return { path: points, miles };
+    };
+    const coords = points.map((p) => p[1].toFixed(5) + "," + p[0].toFixed(5)).join(";");
+    LIVE.routes[key] = fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=simplified&geometries=geojson`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("route"))))
+      .then((j) => {
+        const rt = j.routes && j.routes[0];
+        if (!rt) throw new Error("no route");
+        return { path: rt.geometry.coordinates.map((c) => [c[1], c[0]]), miles: rt.distance / MILE };
+      })
+      .catch(straight);
+    return LIVE.routes[key];
+  }
+
+  const TRUCK_PATHS = '<path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/>';
+  const fmtMi = (n) => Math.max(0, Math.round(n)).toLocaleString("en-US") + " mi";
+
+  function loadTracker(load, stops, mode, etaText) {
+    const pts = stops.map((s) => CITY_COORDS[s.city]);
+    const usable = stops.length >= 2 && pts.every(Boolean);
+    if (!usable) return el("div", { className: "map" }, [routeMapSvg(load)]);
+
+    const live = mode === "live";
+    const canvas = el("div", { className: "ltrack__canvas", role: "application", "aria-label": `Map of ${load.id}` });
+    const pingEl = el("span", { className: "ltrack__ping", textContent: live ? "Updated just now" : "" });
+    const chip = el("span", { className: "ltrack__chip ltrack__chip--" + mode }, [
+      el("i", { className: "ltrack__pulse" }), live ? "Live · Samsara" : mode === "delivered" ? "Delivered" : "Scheduled", pingEl
+    ]);
+    const btn = (label, d, onClick) => {
+      const b = el("button", { type: "button", className: "ltrack__btn", title: label, "aria-label": label }, svg(d));
+      b.addEventListener("click", onClick);
+      return b;
+    };
+    const ctrls = el("div", { className: "ltrack__ctrls" });
+    const mapBox = el("div", { className: "ltrack__map" }, [canvas, chip, ctrls]);
+
+    const fill = el("i", { className: "ltrack__fill" });
+    const rig = el("span", { className: "ltrack__rig" }, svg(TRUCK_PATHS));
+    const ticks = stops.map((s, i) => el("span", {
+      className: "ltrack__tick", textContent: String(s.num),
+      style: `left:${stops.length === 1 ? 0 : (i / (stops.length - 1)) * 100}%`
+    }));
+    const bar = el("div", { className: "ltrack__bar" }, [el("div", { className: "ltrack__rail" }, [fill, ...ticks, rig])]);
+    const nextEl = el("b"), nextSub = el("small");
+    const leftEl = el("b"), etaEl = el("b"), speedEl = el("b");
+    const stat = (label, valueEl) => el("div", { className: "ltrack__stat" }, [el("small", { textContent: label }), valueEl]);
+    const body = el("div", { className: "ltrack__body" }, [
+      el("div", { className: "ltrack__stats" }, [
+        stat("Miles left", leftEl), stat("ETA", etaEl), stat("Speed", speedEl)
+      ])
+    ]);
+    const root = el("div", { className: "ltrack" }, [mapBox, body]);
+
+    let routeInfo = null, map = null, truck = null, doneLine = null, nextLine = null;
+    let cum = null, total = 0, lastPing = Date.now() - 4000, speed = 64, tick = 0, n = 0;
+
+    const buildCum = (path) => {
+      cum = [0];
+      path.forEach((p, i) => { if (i) cum.push(cum[i - 1] + haversineMi(path[i - 1], p)); });
+      total = cum[cum.length - 1] || 1;
+    };
+    const pointAt = (f) => {
+      const path = routeInfo.path, d = f * total;
+      let i = 1;
+      while (i < cum.length - 1 && cum[i] < d) i++;
+      const span = cum[i] - cum[i - 1] || 1, t = Math.min(1, Math.max(0, (d - cum[i - 1]) / span));
+      const a = path[i - 1], b = path[i];
+      return { pos: [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t], idx: i };
+    };
+    const stopFrac = (p) => {
+      let best = 0, bd = Infinity;
+      routeInfo.path.forEach((q, i) => { const d = haversineMi(p, q); if (d < bd) { bd = d; best = i; } });
+      return cum[best] / total;
+    };
+
+    function paint() {
+      if (!routeInfo) return;
+      const f = mode === "delivered" ? 1 : mode === "scheduled" ? 0 : Math.min(1, LIVE.progress[load.id] ?? 0.58);
+      const roadMi = routeInfo.miles;
+      const here = pointAt(f);
+      fill.style.width = (f * 100) + "%";
+      rig.style.left = (f * 100) + "%";
+      const fr = pts.map(stopFrac);
+      const nxt = stops.findIndex((s, i) => fr[i] > f + 0.002);
+      const last = stops[stops.length - 1];
+      if (mode === "delivered") { nextEl.textContent = "Delivered at Stop " + last.num; nextSub.textContent = last.city; }
+      else if (mode === "scheduled") { nextEl.textContent = "Pickup at Stop " + stops[0].num; nextSub.textContent = stops[0].city + " · not started"; }
+      else if (nxt < 0) { nextEl.textContent = "Arriving at destination"; nextSub.textContent = last.city; }
+      else { nextEl.textContent = `En route to Stop ${stops[nxt].num}`; nextSub.textContent = `${stops[nxt].city} · ${fmtMi((fr[nxt] - f) * roadMi)} away`; }
+      leftEl.textContent = fmtMi((1 - f) * roadMi);
+      etaEl.textContent = mode === "delivered" ? "Delivered" : etaText;
+      speedEl.textContent = live ? Math.round(speed) + " mph" : "—";
+      if (map) {
+        doneLine.setLatLngs(routeInfo.path.slice(0, here.idx).concat([here.pos]));
+        nextLine.setLatLngs([here.pos].concat(routeInfo.path.slice(here.idx)));
+        if (truck) truck.setLatLng(here.pos);
+      }
+    }
+
+    function build() {
+      if (map || !window.L || !routeInfo || !canvas.clientWidth) return;
+      map = L.map(canvas, { zoomControl: false, scrollWheelZoom: false, attributionControl: true, zoomSnap: 0.5 });
+      map.attributionControl.setPrefix(false);
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19, attribution: "© OpenStreetMap contributors"
+      }).addTo(map);
+      nextLine = L.polyline(routeInfo.path, { color: "#99BDF5", weight: 4, opacity: 0.95, dashArray: "2 8", lineCap: "round" }).addTo(map);
+      doneLine = L.polyline(routeInfo.path, { color: "#0F6FFF", weight: 5, opacity: 0.95, lineCap: "round" }).addTo(map);
+      stops.forEach((s, i) => {
+        L.marker(pts[i], {
+          icon: L.divIcon({ className: "lt-pin", html: `<span class="${i === stops.length - 1 ? "is-end" : ""}">${s.num}</span>`, iconSize: [24, 24], iconAnchor: [12, 12] }),
+          title: `Stop ${s.num}: ${s.city}`, keyboard: false
+        }).addTo(map);
+      });
+      if (mode !== "scheduled") {
+        truck = L.marker(pts[0], {
+          icon: L.divIcon({ className: "lt-truck", html: `<span class="lt-truck__ring"></span><span class="lt-truck__dot"><svg viewBox="0 0 24 24" aria-hidden="true">${TRUCK_PATHS}</svg></span>`, iconSize: [34, 34], iconAnchor: [17, 17] }),
+          zIndexOffset: 1000, keyboard: false
+        }).addTo(map);
+      }
+      const fit = () => map.fitBounds(L.latLngBounds(routeInfo.path), { padding: [26, 26] });
+      fit();
+      ctrls.append(
+        btn("Zoom in", '<path d="M12 5v14M5 12h14"/>', () => map.zoomIn()),
+        btn("Zoom out", '<path d="M5 12h14"/>', () => map.zoomOut()),
+        btn("Fit route", '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>', fit),
+        btn("Open full tracking map", '<path d="M14 4h6v6M20 4l-8 8M10 6H5v13h13v-5"/>', openTrackingHistory)
+      );
+      paint();
+    }
+
+    fetchRoute(pts).then((info) => { routeInfo = info; buildCum(info.path); paint(); build(); });
+
+    /* The tile map can only size itself once the card is actually on screen
+       (its section may start collapsed), so it waits for a real width. */
+    const ro = new ResizeObserver(() => {
+      if (!root.isConnected) return;
+      if (!map) build(); else map.invalidateSize();
+    });
+    ro.observe(canvas);
+
+    const stop = () => { clearInterval(tick); ro.disconnect(); if (map) { map.remove(); map = null; } };
+    tick = setInterval(() => {
+      if (!root.isConnected) { stop(); return; }
+      n++;
+      const s = Math.round((Date.now() - lastPing) / 1000);
+      if (live) pingEl.textContent = s < 4 ? "Updated just now" : `Updated ${s}s ago`;
+      if (live && n % 6 === 0 && routeInfo) {
+        speed = 61 + Math.random() * 7;
+        LIVE.progress[load.id] = Math.min(0.995, (LIVE.progress[load.id] ?? 0.58) + 3 / routeInfo.miles);
+        lastPing = Date.now();
+        paint();
+      }
+    }, 1000);
+
+    return root;
+  }
+
 
   /* Self-contained route map (the old Figma-hosted image link expired): a
      tinted map tile with a road grid, a river, the dashed route and the
@@ -6635,94 +7150,88 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
 
   function loadCard(load) {
     const card = el("div", { className: "loadcard" });
+    const sections = accordionFor(load);
+    const stops = stopsOf(sections);
+    const mode = state.loadTab === "upcoming" ? "scheduled" : state.loadTab === "historic" ? "delivered" : "live";
+    const progress = liveProgress(load.id, mode);
 
-    /* Header: title, then a pagination-style row — a prev-page dot (icon +
-       load.from) and a total-count badge (load.to) flanking the status
-       pill, connected by a thin line, matching the Figma reference. These
-       two numbers were previously mislabeled as route progress endpoints;
-       they're really load pagination (e.g. "1" current / "99" total). */
-    const toggleLoadDetails = () => {
-      state.expandedLoads.has(load.id) ? state.expandedLoads.delete(load.id) : state.expandedLoads.add(load.id);
-      renderLoadPanelActive();
-    };
-
-    /* The load number is a hyperlink into its own details, same destination
-       as "View More Details" below — clicking either one expands it. */
-    const idLink = el("button", {
-      type: "button", className: "loadcard__id link", textContent: load.id,
-      "aria-expanded": String(state.expandedLoads.has(load.id))
-    });
-    idLink.addEventListener("click", toggleLoadDetails);
-
+    /* Header: the load number (plain text — no bullet, nothing to expand) and
+       its status. */
     card.append(el("header", { className: "loadcard__head" }, [
-      idLink,
-      el("div", { className: "loadcard__nav" }, [
-        el("span", { className: "loadcard__navprev" }, [
-          el("span", { className: "loadcard__navdot", textContent: load.from })
-        ]),
-        el("span", { className: "pill pill--status", "data-status": load.status.toLowerCase(), textContent: "Status: " + load.status }),
-        el("span", { className: "loadcard__navdot loadcard__navdot--count", textContent: load.to })
-      ])
+      el("span", { className: "loadcard__id", textContent: load.id }),
+      el("span", { className: "pill pill--status", "data-status": load.status.toLowerCase(), textContent: "Status: " + load.status })
     ]));
 
+    /* The 1 → 99 line: every stop on the load is a node on it — Stop 1, the
+       extra stops (2, 3, …) and Stop 99 — so nothing in the middle is hidden.
+       A node opens that stop's section below. */
+    if (stops.length) {
+      const line = el("ol", { className: "lsteps", role: "list", "aria-label": "Stops on this load" });
+      stops.forEach((s, i) => {
+        const at = stops.length === 1 ? 0 : i / (stops.length - 1);
+        const st = progress >= 1 || at < progress - 0.001 ? "done" : at <= progress + 0.001 ? "now" : "next";
+        const node = el("button", {
+          type: "button", className: "lstep lstep--" + st, title: `Stop ${s.num}: ${s.city}`,
+          "aria-label": `Stop ${s.num}, ${s.city}`
+        }, [
+          el("span", { className: "lstep__dot", textContent: String(s.num) }),
+          el("span", { className: "lstep__city", textContent: s.city.split(",")[0] })
+        ]);
+        node.addEventListener("click", () => {
+          const wrap = card.querySelector(`[data-acckey="${load.id}::${s.id}"]`);
+          if (wrap) setAccKey(wrap, load.id + "::" + s.id, true, true);
+        });
+        line.append(el("li", {}, node));
+      });
+      card.append(line);
+    }
+
+    /* Pickup and delivery, with their Live / Drop tags as plain text. */
     card.append(el("div", { className: "stops" }, [
       el("div", { className: "stops__end" }, [
+        el("span", { className: "stops__tag stops__tag--live", textContent: load.origin.tag }),
         el("span", { className: "stops__city", textContent: load.origin.city }),
-        el("span", { className: "stops__when", textContent: load.origin.when }),
-        el("span", { className: "pill pill--live", textContent: load.origin.tag })
+        el("span", { className: "stops__when", textContent: load.origin.when })
       ]),
       el("span", { className: "stops__mid", "aria-hidden": "true" },
         el("span", {}, svg('<path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/>'))),
       el("div", { className: "stops__end" }, [
+        el("span", { className: "stops__tag stops__tag--drop", textContent: load.dest.tag }),
         el("span", { className: "stops__city", textContent: load.dest.city }),
-        el("span", { className: "stops__when", textContent: load.dest.when }),
-        el("span", { className: "pill pill--drop", textContent: load.dest.tag })
+        el("span", { className: "stops__when", textContent: load.dest.when })
       ])
     ]));
 
-    card.append(el("div", { className: "map" }, [
-      routeMapSvg(load)
-    ]));
+    card.append(loadTracker(load, stops, mode, load.dest.when));
 
-    /* Every load card — Current, each Upcoming, and Historic — gets its own
-       independent "View More Details" toggle, matching the Figma flow. */
-    const expanded = state.expandedLoads.has(load.id);
-    const toggle = el("button", {
-      type: "button", className: "loadpanel__toggle",
-      "aria-expanded": String(expanded),
-      textContent: expanded ? "View Less Details" : "View More Details"
+    /* Details are always drawn opened — there's no View More toggle. */
+    const sectionEls = sections.map((s) => accordion(load, s));
+    const keys = sections.map((s) => load.id + "::" + s.id);
+    const expandAll = el("button", { type: "button", className: "link" });
+    const syncLabel = () => { expandAll.textContent = keys.every((k) => state.accOpen.has(k)) ? "Minimize All" : "Expand All"; };
+    syncLabel();
+    expandAll.addEventListener("click", () => {
+      const open = !keys.every((k) => state.accOpen.has(k));
+      sectionEls.forEach((w, i) => setAccKey(w, keys[i], open, false));
+      syncLabel();
+      if (open) revealInPanel(expandAll);
     });
-    toggle.addEventListener("click", toggleLoadDetails);
-    card.append(toggle);
 
-    if (expanded) {
-      const sections = accordionFor(load);
-      const openKeys = sections.map((s) => load.id + "::" + s.id);
-      const allOpen = openKeys.every((k) => state.accOpen.has(k));
-      const expandAll = el("button", {
-        type: "button", className: "link",
-        textContent: allOpen ? "Minimize All" : "Expand All"
-      });
-      expandAll.addEventListener("click", () => {
-        if (allOpen) openKeys.forEach((k) => state.accOpen.delete(k));
-        else openKeys.forEach((k) => state.accOpen.add(k));
-        renderLoadPanelActive();
-      });
+    const summaryLink = el("button", { type: "button", className: "link", textContent: "View" });
+    summaryLink.addEventListener("click", openDocuments);
+    const summaryRow = el("div", { className: "acc acc--flat" }, [
+      el("span", { textContent: "Load Document Summary" }), summaryLink
+    ]);
 
-      const summaryLink = el("button", { type: "button", className: "link", textContent: "View" });
-      summaryLink.addEventListener("click", openDocuments);
-      const summaryRow = el("div", { className: "acc acc--flat" }, [
-        el("span", { textContent: "Load Document Summary" }), summaryLink
-      ]);
-
-      card.append(el("div", { className: "lddetails" }, [
-        el("header", { className: "lddetails__head" }, [
-          el("h5", { textContent: LOAD_TAB_LABEL[state.loadTab] + " Load Details" }), expandAll
-        ]),
-        ...sections.map((s) => accordion(load, s)),
-        summaryRow
-      ]));
-    }
+    const wrapEl = el("div", { className: "lddetails" }, [
+      el("header", { className: "lddetails__head" }, [
+        el("h5", { textContent: LOAD_TAB_LABEL[state.loadTab] + " Load Details" }), expandAll
+      ]),
+      ...sectionEls,
+      summaryRow
+    ]);
+    wrapEl.addEventListener("accsync", syncLabel);
+    card.append(wrapEl);
 
     return card;
   }
@@ -6743,26 +7252,38 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
   }
 
   function renderAssets() {
+    /* Images and files are the same card: a leading tile (the photo itself, or
+       a file-type tile), the name over its meta line, and on the right the stop
+       it belongs to (Stop 1, 2, 3 or 99) above its status. */
+    const assetCard = (lead, name, meta, stop, status, tone) => el("li", { className: "frow" }, [
+      lead,
+      el("span", { className: "frow__body" }, [
+        el("b", { textContent: name }),
+        el("small", { textContent: meta })
+      ]),
+      el("span", { className: "frow__tags" }, [
+        el("span", { className: "fstop", textContent: stop }),
+        status ? el("span", { className: "fbadge" + (tone ? " fbadge--" + tone : ""), textContent: status }) : null
+      ])
+    ]);
     const imgs = state.showAllImages ? IMAGES : IMAGES.slice(0, 4);
-    $('[data-role="images"]').replaceChildren(...imgs.map((img, i) =>
-      el("li", { className: "fthumb" }, el("img", {
-        src: img.src, alt: `Attachment ${i + 1}`, loading: "lazy",
-        /* The Figma-hosted photo links expire — the tile's own image icon shows instead. */
-        onerror() { this.remove(); }
-      }))));
+    $('[data-role="images"]').replaceChildren(...imgs.map((img) => {
+      const lead = el("span", { className: "frow__type frow__type--img" }, [
+        svg('<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="m21 16-5-5-8 9"/>'),
+        el("img", {
+          src: img.src, alt: "", loading: "lazy",
+          /* The Figma-hosted photo links expire — the tile's own image icon shows instead. */
+          onerror() { this.remove(); }
+        })
+      ]);
+      return assetCard(lead, img.name, img.meta, img.stop, null);
+    }));
     $('[data-action="toggle-images"]').textContent = state.showAllImages ? "View Less" : "View All";
     $('[data-action="toggle-images"]').setAttribute("aria-expanded", String(state.showAllImages));
 
     const files = state.showAllFiles ? FILES : FILES.slice(0, 4);
     $('[data-role="files"]').replaceChildren(...files.map((f) =>
-      el("li", { className: "frow" }, [
-        el("span", { className: "frow__type", textContent: "PDF" }),
-        el("span", { className: "frow__body" }, [
-          el("b", { textContent: f.name }),
-          el("small", { textContent: f.meta })
-        ]),
-        el("span", { className: "fbadge", textContent: f.status })
-      ])));
+      assetCard(el("span", { className: "frow__type", textContent: "PDF" }), f.name, f.meta, f.stop, f.status)));
     $('[data-action="toggle-files"]').textContent = state.showAllFiles ? "Show fewer" : `Show all ${FILES.length} files`;
     $('[data-action="toggle-files"]').setAttribute("aria-expanded", String(state.showAllFiles));
 
@@ -6800,9 +7321,16 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
     const chip = (iconPaths, text, cls = "") => el("span", { className: "dchip " + cls }, [
       iconPaths ? svg(iconPaths) : el("span", { className: "dchip__dot" }), text
     ]);
+    const duty = isDriverRole(peer.role) ? (HOS_BY[peer.id] || HOS) : null;
     $('[data-role="card-chips"]').replaceChildren(
-      chip('<path d="M3 12h4l3-8 4 16 3-8h4"/>', peer.source === "Samsara" ? "Samsara ELD" : peer.source)
+      chip('<path d="M3 12h4l3-8 4 16 3-8h4"/>', peer.source === "Samsara" ? "Samsara ELD" : peer.source),
+      ...(duty ? [dutyCard(duty.dutyCode, duty.duty)] : [])
     );
+
+    /* Last location: the provider the ping came from, and when it landed. */
+    const ping = new Date(Date.now() - 4 * 60000);
+    $('[data-role="loc-date"]').textContent = ping.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    $('[data-role="loc-time"]').textContent = ping.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
     renderDriverCards(peer);
   }
 
@@ -6843,7 +7371,6 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
         av,
         el("span", {}, [el("b", { textContent: convo.name }), el("small", { textContent: convo.loc })])
       ]),
-      el("span", { className: "dbadge dbadge--" + (HOS_BADGE[duty.dutyCode] || "slate") }, [el("b", { textContent: duty.dutyCode }), duty.duty]),
       el("p", { className: "dtile__drive", textContent: hosHM(hosMins(duty.rings[1].value)).replace(/ 0(\d)m/, " $1m") + " drive" }),
       el("div", { className: "dtile__acts" }, [
         act("Call", '<path d="M6 3h3l2 5-2.5 1.5a12 12 0 0 0 6 6L16 13l5 2v3a3 3 0 0 1-3 3A15 15 0 0 1 3 6a3 3 0 0 1 3-3Z"/>'),
@@ -6917,17 +7444,26 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
     return tile;
   }
 
-  function unitTile(label, value, pathD, extra, tone) {
-    const tile = el("button", { type: "button", className: "dunit", title: `Copy ${label.toLowerCase()} number` }, [
+  /* A truck / trailer card: the unit number up front, and a chevron that opens
+     its details underneath (no copy-on-click). */
+  function unitTile(label, value, pathD, extra, tone, details = []) {
+    const head = el("button", { type: "button", className: "dunit__head", "aria-expanded": "false" }, [
       el("span", { className: "dunit__tile" + (tone ? " dunit__tile--" + tone : "") }, svg(pathD)),
       el("span", { className: "dunit__body" }, [
         el("small", { textContent: label }),
         el("span", { className: "dunit__val" }, [el("b", { textContent: value }), extra || null])
-      ])
+      ]),
+      svg('<path d="m7 10 5 5 5-5"/>', "dunit__chev")
     ]);
-    tile.addEventListener("click", () => {
-      try { navigator.clipboard && navigator.clipboard.writeText(value); } catch (e) { /* clipboard blocked */ }
-      toast(`${label} ${value} copied`);
+    const dl = el("dl", { className: "dunit__more", hidden: true });
+    details.forEach(([k, v]) => dl.append(el("div", {}, [el("dt", { textContent: k }), el("dd", { textContent: v })])));
+    const tile = el("div", { className: "dunit" }, [head, dl]);
+    head.addEventListener("click", () => {
+      const open = dl.hidden;
+      dl.hidden = !open;
+      tile.classList.toggle("is-open", open);
+      head.setAttribute("aria-expanded", String(open));
+      if (open) revealInPanel(tile);
     });
     return tile;
   }
@@ -6949,7 +7485,8 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
     role.dataset.tone = ROLE_TONE[other.role] || "slate";
     $('[data-role="co-hero-org"]').textContent = other.org || "";
     $('[data-role="co-hero-chips"]').replaceChildren(
-      el("span", { className: "dchip" }, [svg('<path d="M3 12h4l3-8 4 16 3-8h4"/>'), other.source === "Samsara" ? "Samsara ELD" : other.source])
+      el("span", { className: "dchip" }, [svg('<path d="M3 12h4l3-8 4 16 3-8h4"/>'), other.source === "Samsara" ? "Samsara ELD" : other.source]),
+      dutyCard((HOS_BY[other.id] || HOS).dutyCode, (HOS_BY[other.id] || HOS).duty)
     );
   }
 
@@ -6971,8 +7508,14 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
     equipSlot.replaceChildren(el("div", { className: "dequip" }, [
       driverTile("Driver", driverC, driverC === peer),
       coC ? driverTile("Co-driver", coC, coC === peer) : emptyTile(peer),
-      unitTile("Truck", EQUIPMENT.truck, '<path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>'),
-      unitTile("Reefer trailer", EQUIPMENT.trailer, '<rect x="2" y="6" width="19" height="10" rx="1.5"/><circle cx="7" cy="18.5" r="1.5"/><circle cx="14" cy="18.5" r="1.5"/>', temp, "blue")
+      unitTile("Truck", EQUIPMENT.truck, '<path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>', null, null, [
+        ["Make / model", "Freightliner Cascadia"], ["Year", "2022"], ["VIN", "3AKJHHDR4NSNB2147"], ["Plate", "VA · TRK-2147"],
+        ["Odometer", "412,880 mi"], ["Fuel level", "68%"], ["Last inspection", "Oct 3 · Passed"], ["Tracking", "Samsara · live"]
+      ]),
+      unitTile("Reefer trailer", EQUIPMENT.trailer, '<rect x="2" y="6" width="19" height="10" rx="1.5"/><circle cx="7" cy="18.5" r="1.5"/><circle cx="14" cy="18.5" r="1.5"/>', temp, "blue", [
+        ["Type", "Reefer · 53'"], ["Plate", "VA · TRL-V305"], ["Set point", "34.0°F"], ["Temp now", EQUIPMENT.temp],
+        ["Reefer mode", "Continuous"], ["Reefer fuel", "74%"], ["Doors", "Closed"], ["Last PM", "Sep 12"]
+      ])
     ]));
 
     const team = coC ? [
@@ -7738,6 +8281,11 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
     state.docsOpen = false;
     docsheet.hidden = true;
   }
+  /* Centred like a dialog: Esc or a click on the dimmed page closes it. */
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && state.docsOpen) closeDocuments(); });
+  document.addEventListener("click", (e) => {
+    if (state.docsOpen && !docsheet.contains(e.target) && !e.target.closest(".lddetails")) closeDocuments();
+  });
 
   /* =====================================================================
      SHOW MAP — shipment location history overlay (details card's More menu)
@@ -7770,10 +8318,67 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
   function selectTrackingRow(index) {
     state.trackingRow = state.trackingRow === index ? null : index;
     renderTrackingTable();
-    if (state.trackingRow === null) { trackingExtraPin.hidden = true; return; }
-    const stop = TRACKING_STOPS[state.trackingRow];
-    $('[data-role="tracking-extra-loc"]').textContent = `${stop.loc.split(",")[0]}, ${stop.time.split(" ")[1]}`;
-    trackingExtraPin.hidden = false;
+    trackingMapFocus(state.trackingRow);
+  }
+
+  /* The ten ELD pings, on a real map. TRACKING_STOPS runs newest first; the
+     road route is drawn oldest to newest through them, every ping is a numbered
+     pin (matching the table), and the newest is the driver. Clicking a table
+     row opens that ping on the map. */
+  const TRACKING_COORDS = {
+    "Elkview": [38.4793, -81.4565], "Clendenin": [38.4890, -81.3534], "Clay": [38.4590, -81.0809],
+    "Frametown": [38.5390, -80.9156], "Flatwoods": [38.7234, -80.6509], "Cowen": [38.4126, -80.5645],
+    "Hillsboro": [38.1426, -80.2137], "Snowshoe": [38.4062, -80.0036], "Huttonsville": [38.6437, -79.9722],
+    "Green Bank": [38.4090, -79.8269]
+  };
+  const TRK = { map: null, pins: [], popup: null, bounds: null };
+  const trkLatLng = (stop) => TRACKING_COORDS[stop.loc.split(",")[0]];
+
+  function ensureTrackingMap() {
+    if (!window.L) return;
+    const box = $('[data-role="tracking-leaflet"]');
+    if (!TRK.map) {
+      const map = TRK.map = L.map(box, { zoomControl: false, attributionControl: true, zoomSnap: 0.5 });
+      map.attributionControl.setPrefix(false);
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19, attribution: "© OpenStreetMap contributors"
+      }).addTo(map);
+      const chron = TRACKING_STOPS.slice().reverse().map(trkLatLng);
+      TRK.bounds = L.latLngBounds(chron);
+      map.fitBounds(TRK.bounds, { padding: [60, 60] });
+      fetchRoute(chron).then((info) => {
+        L.polyline(info.path, { color: "#BFDBFE", weight: 9, opacity: 0.9, lineCap: "round" }).addTo(map);
+        L.polyline(info.path, { color: "#0F6FFF", weight: 4, opacity: 0.95, lineCap: "round" }).addTo(map);
+        TRK.pins.forEach((m) => m.bringToFront && m.bringToFront());
+      });
+      TRK.pins = TRACKING_STOPS.map((stop, i) => {
+        const newest = i === 0;
+        const icon = L.divIcon({
+          className: newest ? "lt-truck lt-truck--lg" : "lt-pin lt-pin--sm",
+          html: newest
+            ? `<span class="lt-truck__ring"></span><span class="lt-truck__dot"><svg viewBox="0 0 24 24" aria-hidden="true">${TRUCK_PATHS}</svg></span>`
+            : `<span>${i + 1}</span>`,
+          iconSize: newest ? [34, 34] : [22, 22], iconAnchor: newest ? [17, 17] : [11, 11]
+        });
+        const m = L.marker(trkLatLng(stop), { icon, zIndexOffset: newest ? 1000 : 0, title: `${i + 1}. ${stop.loc}`, keyboard: false }).addTo(map);
+        m.on("click", () => selectTrackingRow(i));
+        return m;
+      });
+      TRK.popup = L.popup({ closeButton: false, offset: [0, -8], className: "trk-popup", autoPan: false });
+    }
+  }
+
+  /* Opens one ping on the map (or, with null, closes it and fits the route). */
+  function trackingMapFocus(index) {
+    if (!TRK.map) return;
+    TRK.map.invalidateSize();
+    if (index == null) { TRK.map.closePopup(); TRK.map.fitBounds(TRK.bounds, { padding: [60, 60] }); return; }
+    const stop = TRACKING_STOPS[index], at = trkLatLng(stop);
+    TRK.popup.setLatLng(at).setContent(
+      `<b>Location</b><span>${stop.loc.split(",")[0]} · ${stop.time.split(" ")[1]}</span>` +
+      `<span class="dstat"><span class="duty d-D">D</span>Driving</span>`
+    ).openOn(TRK.map);
+    TRK.map.flyTo(at, Math.max(TRK.map.getZoom(), 10), { duration: 0.6 });
   }
 
   function openTrackingHistory() {
@@ -7782,11 +8387,12 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
     $('[data-role="tracking-name"]').textContent = name;
     paintAvatar($('[data-role="tracking-avatar"]'), name);
     state.trackingRow = null;
-    trackingExtraPin.hidden = true;
     renderTrackingTable();
     state.trackingOpen = true;
     trackingEl.hidden = false;
     closeMenu();
+    ensureTrackingMap();
+    if (TRK.map) setTimeout(() => { TRK.map.invalidateSize(); trackingMapFocus(null); }, 60);
     /* Decorative only — the modules row above .app isn't wired to real
        navigation, but Figma shows "Customer" active instead of "Sales" while
        this screen is up, so mirror that here and restore it on close. */
@@ -7967,6 +8573,12 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
   };
   const HOS_STATUS = { D: "Driving", ON: "On duty", SB: "Sleeper berth", OFF: "Off duty" };
   const HOS_BADGE  = { D: "blue", ON: "amber", SB: "slate", OFF: "slate" };
+  /* The planner's duty-status card: a small solid letter tile (D green, ON orange, OF red, SB black) then the status word. */
+  const DUTY_LETTER = { D: "D", ON: "ON", SB: "SB", OFF: "OF" };
+  const dutyCard = (code, label) => el("span", { className: "dstat", title: "ELD duty status" }, [
+    el("span", { className: "duty d-" + (DUTY_LETTER[code] || code), textContent: DUTY_LETTER[code] || code }),
+    label || HOS_STATUS[code] || code
+  ]);
 
   /* One ring: fill = remaining ÷ limit, colour follows how much is left,
      hover shows the exact figures. `animate` sweeps it in from empty. */
@@ -8079,7 +8691,7 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
       parts.push(el("div", { className: "hos__rings" }, data.rings.map((r, i) => hosRingEl(r, left[i], animate))));
       const driving = data.dutyCode === "D";
       parts.push(el("div", { className: "hos__status" }, [
-        el("span", { className: "dbadge dbadge--" + (HOS_BADGE[data.dutyCode] || "slate") }, [el("b", { textContent: data.dutyCode }), data.duty]),
+        dutyCard(data.dutyCode, data.duty),
         el("span", { className: "dchip" }, [svg('<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/>'), `Cycle ${hosHM(left[3]).replace(/ 0(\d)m/, " $1m")} left`]),
         el("span", { className: "dchip" }, [svg('<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>'), `Avail. tomorrow ${data.availTomorrow}`]),
         driving ? el("span", { className: "hos__live", textContent: "Live" }) : null
@@ -8655,11 +9267,74 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
     const name = b.textContent.trim();
     if (b.dataset.goto === "personal-info") openPersonalInfoForActivePeer();
     else if (b.dataset.goto) setView(b.dataset.goto);
-    else if (name === "Track and trace") openTrackingHistory();
-    else if (name === "Request check call") setView("request-location");
-    else if (name === "Resend to driver") setView("request-document");
-    else toast(name);
+    else if (!openCommand(name)) toast(name);
   }));
+
+  /* Back arrow in the details header (sidebar forms). */
+  $('[data-action="details-back"]').addEventListener("click", leaveSubview);
+
+  /* Communication history: the Add button follows the active tab (All → Add
+     communication, Messages → Add message, Calls → Add call) and opens the
+     sidebar form for it. Saving drops the entry at the top of the timeline. */
+  const COMM_ADD = {
+    all:  { label: "Add communication", type: "msg" },
+    msg:  { label: "Add message", type: "msg" },
+    call: { label: "Add call", type: "call" }
+  };
+  const commForm = $('[data-role="form-comm"]');
+  const commType = $("#ca-type");
+  function syncCommForm() {
+    const call = commType.value === "call";
+    $$("[data-for='call']", commForm).forEach((n) => { n.hidden = !call; });
+    $('[data-role="ca-text-label"]').textContent = call ? "Call notes" : "Message";
+    $('[data-role="ca-submit"]').textContent = call ? "Add call" : "Add message";
+    VIEW_TITLE["comm-add"] = call ? "Add Call" : "Add Message";
+    if (state.view === "comm-add") detailsTitle.textContent = VIEW_TITLE["comm-add"];
+  }
+  commType.addEventListener("change", syncCommForm);
+  $$(".cfilter [data-filter]").forEach((b) => b.addEventListener("click", () => {
+    $('[data-role="comm-add-label"]').textContent = (COMM_ADD[b.dataset.filter] || COMM_ADD.all).label;
+  }));
+  $('[data-action="comm-add"]').addEventListener("click", () => {
+    const f = ($(".cfilter [aria-pressed='true']") || {}).dataset?.filter || "all";
+    const cfg = COMM_ADD[f] || COMM_ADD.all;
+    setSelectValue(commType, cfg.type);
+    /* On a single tab the type is fixed — only "All" lets you choose. */
+    commType.closest(".field").hidden = f !== "all";
+    $("#ca-text").value = ""; $("#ca-dur").value = "";
+    setSelectValue($("#ca-who"), $("#ca-who").options[0].textContent);
+    setSelectValue($("#ca-dir"), "Outbound");
+    setSelectValue(commType, cfg.type);
+    syncCommForm();
+    setView("comm-add");
+    detailsTitle.textContent = f === "all" ? "Add Communication" : VIEW_TITLE["comm-add"];
+  });
+  commForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const call = commType.value === "call";
+    const who = $("#ca-who").value.split(" · ")[0];
+    const text = $("#ca-text").value.trim();
+    if (!text && !call) { $("#ca-text").focus(); return; }
+    const dur = $("#ca-dur").value.trim();
+    const head = call ? `${$("#ca-dir").value} call${dur ? " · " + dur : ""}` : who;
+    const sub = call ? `Lacy Harris ${$("#ca-dir").value === "Inbound" ? "←" : "→"} ${who}${text ? " · " + text : ""}` : text;
+    const icon = call
+      ? '<path d="M6 3h3l2 5-2.5 1.5a12 12 0 0 0 6 6L16 13l5 2v3a3 3 0 0 1-3 3A15 15 0 0 1 3 6a3 3 0 0 1 3-3Z"/>'
+      : '<path d="M4 5h16v11H9l-5 4z"/>';
+    const li = el("li", { "data-type": call ? "call" : "msg", "data-tone": call ? "green" : "blue" }, [
+      el("span", { className: "ctl__ic" }, svg(icon)),
+      el("div", {}, [
+        el("p", { className: "ctl__head" }, [el("b", { textContent: head }), el("time", { textContent: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) })]),
+        el("p", { textContent: sub })
+      ])
+    ]);
+    $(".ctl").prepend(li);
+    const f = ($(".cfilter [aria-pressed='true']") || {}).dataset?.filter || "all";
+    li.hidden = f !== "all" && li.dataset.type !== f;
+    toast(call ? "Call added" : "Message added");
+    setView("details");
+    setAcc($('[data-acc="comms"]'), true);
+  });
   $('[data-action="add-member"]').addEventListener("click", () => toast("Choose someone to add to this conversation"));
 
   /* Driver panel: drag a row by its grip (or use ↑ / ↓ on the focused grip) to
@@ -8716,7 +9391,6 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
     $$("[data-ftab]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
     $$("[data-fpanel]").forEach((p) => { p.hidden = p.dataset.fpanel !== b.dataset.ftab; });
   }));
-  $('[data-action="request-file"]').addEventListener("click", () => setView("request-document"));
   $('[data-action="upload-file"]').addEventListener("click", () => toast("Choose a file to upload"));
 
   /* Communication history filter pills. */
@@ -8726,6 +9400,9 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
     $$(".ctl li").forEach((li) => { li.hidden = f !== "all" && li.dataset.type !== f; });
   }));
   $$('[data-action="close-tracking"]').forEach((b) => b.addEventListener("click", closeTrackingHistory));
+  $('[data-action="trk-zoom-in"]').addEventListener("click", () => TRK.map && TRK.map.zoomIn());
+  $('[data-action="trk-zoom-out"]').addEventListener("click", () => TRK.map && TRK.map.zoomOut());
+  $('[data-action="trk-fit"]').addEventListener("click", () => { state.trackingRow = null; renderTrackingTable(); trackingMapFocus(null); });
   document.addEventListener("click", (e) => {
     if (!moreMenu.hidden && !e.target.closest(".cardacts__more")) closeMenu();
   });
@@ -8808,6 +9485,436 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
     document.addEventListener("click", (e) => { if (!wrap.contains(e.target)) close(); });
     sync();
   }
+  /* =====================================================================
+     COMMAND CENTER — every button opens its flow inside this right sidebar
+     (the same way Request check call does), instead of a modal over the page.
+     The flows are the ones in the finalised Command Center (login.html):
+     Edit load, Repower options, Post to loadboard, BOL generator, Toll / fuel
+     data, plus Issue funds, OS&D, Invoice / payments and Copy load. Request
+     check call, Resend to driver and Track and trace reuse the existing
+     views. Each form is built from a small spec below.
+     ===================================================================*/
+  const CC_STOPS = ["Stop 1: Fairfield, CA", "Stop 2: Cleveland, OH", "Stop 3: Chatham, NJ", "Stop 99: Roanoke, VA"];
+  const CC_TRAILERS = ["Box Truck | 26'", "Box Truck | 40'", "Dry Van | 28'", "Dry Van | 48'", "Dry Van | 53'", "Power Only",
+    "Reefer | 48'", "Reefer | 53'", "Vented Van | 48'", "Vented Van | 53'"];
+  const CC_BOARDS = ["Dispatch Pro", "DAT One", "Truckstop", "123 Loadboard", "Direct Freight",
+    "Next Load", "Trucker Path", "Coyote", "JBHunt 360", "Post Everywhere"];
+  const ccLoadNo = () => (state.view === "load-details" || state.backTo === "load-details") && openLoad() ? openLoad().no : LOADS.current[0].id;
+
+  const CC_FORMS = {
+    "cc-edit-load": {
+      title: "Edit Load", submit: "Save changes", done: "Load updated",
+      intro: "Quick changes to this load. The full editor has every field.",
+      link: { label: "Open full editor", href: "https://dpeditload.pages.dev/" },
+      fields: [
+        { t: "section", label: "Schedule" },
+        { t: "text", id: "pu", label: "Pickup · Stop 1", value: "03/15/2026  08:00 AM" },
+        { t: "text", id: "del", label: "Delivery · Stop 99", value: "03/16/2026  11:00 AM" },
+        { t: "section", label: "Equipment & rate" },
+        { t: "select", id: "eq", label: "Equipment", options: CC_TRAILERS, value: "Reefer | 53'" },
+        { t: "text", id: "wt", label: "Weight (lb)", value: "12,000" },
+        { t: "text", id: "rate", label: "Customer rate", value: "$ 4,200.00" },
+        { t: "textarea", id: "notes", label: "Notes", placeholder: "Anything the driver should know" }
+      ]
+    },
+    "cc-funds": {
+      title: "Issue Funds", submit: "Issue funds", done: "Funds issued",
+      intro: "Advances are deducted from the driver's next settlement.",
+      fields: [
+        { t: "select", id: "to", label: "Pay to", options: ["Micheal Scott · Driver", "Philip Dunphy · Co-driver", "Lacy Harris · Dispatcher"] },
+        { t: "select", id: "type", label: "Funds type", options: ["Cash advance", "Comchek", "EFS fuel code", "Lumper", "Detention", "Other"] },
+        { t: "text", id: "amt", label: "Amount", value: "$ " },
+        { t: "select", id: "via", label: "Send via", options: ["Comchek code", "EFS code", "Wire", "Check"] },
+        { t: "text", id: "ref", label: "Reference / check #", placeholder: "Optional" },
+        { t: "textarea", id: "why", label: "Reason", placeholder: "Enter" }
+      ]
+    },
+    "cc-bol": {
+      title: "BOL Generator", submit: "Create", done: "Bill of lading created",
+      intro: "Pick where the freight ships from and to.",
+      fields: [
+        { t: "checks", id: "opt", items: [{ id: "blind", label: "Blind BOL", checked: true }] },
+        { t: "select", id: "from", label: "Ship from", options: ["Select stop", ...CC_STOPS] },
+        { t: "select", id: "to", label: "Ship to", options: ["Select stop", ...CC_STOPS] }
+      ]
+    },
+    "cc-osd": {
+      title: "OS&D Report", submit: "Submit report", done: "OS&D report submitted",
+      intro: "Overage, shortage or damage found on this load.",
+      fields: [
+        { t: "select", id: "type", label: "Report type", options: ["Shortage", "Overage", "Damage", "Refused"] },
+        { t: "select", id: "stop", label: "Stop", options: CC_STOPS },
+        { t: "text", id: "item", label: "Item / pallets affected", placeholder: "e.g. 2 pallets" },
+        { t: "textarea", id: "desc", label: "What happened", placeholder: "Enter" },
+        { t: "drop", label: "Add photos" },
+        { t: "checks", id: "n", items: [{ id: "cust", label: "Notify the customer", checked: true }, { id: "claim", label: "Open a claim" }] }
+      ]
+    },
+    "cc-copy": {
+      title: "Copy Load", submit: "Copy load", done: null,
+      intro: "Start a new load from this one.",
+      fields: [
+        { t: "checks", id: "what", label: "Copy", items: [
+          { id: "stops", label: "Stops & appointments", checked: true }, { id: "refs", label: "References", checked: true },
+          { id: "notes", label: "Notes" }, { id: "docs", label: "Documents" }, { id: "equip", label: "Driver & equipment" } ] },
+        { t: "text", id: "date", label: "New pickup date", value: "03/22/2026  08:00 AM" },
+        { t: "select", id: "n", label: "Copies", options: ["1", "2", "3", "4", "5"] }
+      ]
+    }
+  };
+
+  function ccBuildField(key, f) {
+    const id = `${key}-${f.id || "x"}`;
+    if (f.t === "section") return el("h5", { className: "ccsec", textContent: f.label });
+    if (f.t === "rows") {
+      const dl = el("dl", { className: "ccrows" });
+      f.rows.forEach(([k, v]) => dl.append(el("dt", { textContent: k }), el("dd", { textContent: v })));
+      return dl;
+    }
+    if (f.t === "drop") {
+      return el("p", { className: "dropzone" }, el("button", { type: "button", className: "link", onclick: () => toast("Choose files to attach") }, [
+        svg('<path d="M12 16V4"/><path d="m8 8 4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>'), f.label
+      ]));
+    }
+    if (f.t === "checks") {
+      return el("fieldset", { className: "ccchecks" }, [
+        f.label ? el("legend", { textContent: f.label }) : null,
+        ...f.items.map((c) => {
+          const box = el("input", { id: `${id}-${c.id}`, type: "checkbox", name: c.id });
+          box.checked = !!c.checked;
+          return el("span", { className: "check" }, [box, el("label", { htmlFor: `${id}-${c.id}`, textContent: c.label })]);
+        })
+      ]);
+    }
+    const label = el("label", { htmlFor: id, textContent: f.label });
+    let input;
+    if (f.t === "select") {
+      input = el("select", { id, name: f.id }, f.options.map((o) => el("option", { textContent: o })));
+      if (f.value) input.value = f.value;
+    } else if (f.t === "textarea") {
+      input = el("textarea", { id, name: f.id, rows: 3, placeholder: f.placeholder || "" });
+    } else {
+      input = el("input", { id, name: f.id, type: "text", autocomplete: "off", placeholder: f.placeholder || "" });
+      if (f.value) input.value = f.value;
+    }
+    return el("p", { className: "field" }, [label, input]);
+  }
+
+  /* The strip at the top of every flow: which load it acts on. */
+  const ccContext = (key) => el("p", { className: "ccctx" }, [
+    svg('<rect x="3" y="7" width="18" height="12" rx="2"/><path d="M8 7V5h8v2"/>'),
+    "Load No: ", el("b", { "data-role": "cc-load-" + key })
+  ]);
+
+  function ccShell(key, title, children) {
+    VIEW_TITLE[key] = title;
+    const view = el("section", { className: "view", "data-view": key, hidden: true }, children);
+    $('[data-role="details-scroll"]').append(view);
+    return view;
+  }
+
+  function ccFormFooter(submitLabel) {
+    const cancel = el("button", { type: "button", className: "btn btn--ghost", textContent: "Cancel" });
+    cancel.addEventListener("click", leaveSubview);
+    return el("div", { className: "ccfoot" }, [cancel, el("button", { type: "submit", className: "btn btn--primary", textContent: submitLabel })]);
+  }
+
+  function initCommandForms() {
+    /* simple spec-driven forms */
+    Object.entries(CC_FORMS).forEach(([key, cfg]) => {
+      const form = el("form", { className: "form ccform", "data-role": "form-" + key }, [
+        ccContext(key),
+        cfg.intro ? el("p", { className: "ccintro", textContent: cfg.intro }) : null,
+        ...cfg.fields.map((f) => ccBuildField(key, f)),
+        cfg.link ? el("a", { className: "cclink", href: cfg.link.href, target: "_blank", rel: "noopener" }, [
+          svg('<path d="M14 4h6v6M20 4l-8 8M10 6H5v13h13v-5"/>'), cfg.link.label
+        ]) : null,
+        ccFormFooter(cfg.submit)
+      ]);
+      ccShell(key, cfg.title, form);
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (key === "cc-copy") {
+          const n = Number(form.querySelector('select[name="n"]').value) || 1;
+          toast(n > 1 ? `${n} copies created from ${ccLoadNo()}` : `Copy created: ${ccLoadNo()}-C1`);
+        } else if (key === "cc-bol") {
+          const [a, b] = ["from", "to"].map((k) => form.querySelector(`select[name="${k}"]`).value);
+          if (a === "Select stop" || b === "Select stop") { toast("Choose a ship-from and ship-to stop"); return; }
+          toast(cfg.done);
+        } else toast(cfg.done);
+        leaveSubview();
+      });
+    });
+
+    initRepowerForm();
+    initTollFuel();
+    initInvoice();
+    initPostLoadboard();
+  }
+
+  /* ---- Repower options: find the nearest truck or trailer ---------------- */
+  function initRepowerForm() {
+    const key = "cc-repower";
+    let mode = "truck";
+    const seg = el("div", { className: "dseg ccseg", role: "group", "aria-label": "Find" }, ["truck", "trailer"].map((m) =>
+      el("button", { type: "button", "data-mode": m, "aria-pressed": String(m === mode), textContent: m === "truck" ? "Find truck" : "Find trailer" })));
+    const city = el("input", { id: key + "-city", type: "text", placeholder: "City", autocomplete: "off" });
+    const stateSel = el("select", { id: key + "-state" }, ["", "VA", "WV", "OH", "PA", "NJ", "NC", "TN", "GA"].map((s) => el("option", { textContent: s || "State" })));
+    const byLoc = el("input", { id: key + "-byloc", type: "checkbox" });
+    const locSel = el("select", { id: key + "-loc" }, ["DATR  Dawson Truck Lines, Inc — Roanoke, VA", "DATR22  Bluewave Beverage Co. — Roanoke, VA",
+      "DATR23  Cascade Retail Group — Roanoke, VA", "DATR24  Titan Group — Roanoke, VA"].map((s) => el("option", { textContent: s })));
+    const trailerSel = el("select", { id: key + "-trailer" }, ["Select Type", ...CC_TRAILERS].map((s) => el("option", { textContent: s })));
+    const includeSel = el("select", { id: key + "-include" }, ["Current Location (Nearest Truck)", "Delivery Location (Closest Delivery)", "In Route (Passing By)"].map((s) => el("option", { textContent: s })));
+    const empty = el("input", { id: key + "-empty", type: "checkbox" });
+    const vacant = el("input", { id: key + "-vacant", type: "checkbox" });
+    const vacantRow = el("span", { className: "check" }, [vacant, el("label", { htmlFor: key + "-vacant", textContent: "Show available trucks (Vacant)" })]);
+    const results = el("div", { className: "ccresults", hidden: true });
+
+    const cityRow = el("div", { className: "ccpair" }, [
+      el("p", { className: "field" }, [el("label", { htmlFor: key + "-city", textContent: "City" }), city]),
+      el("p", { className: "field" }, [el("label", { htmlFor: key + "-state", textContent: "State" }), stateSel])
+    ]);
+    const locRow = el("p", { className: "field", hidden: true }, [el("label", { htmlFor: key + "-loc", textContent: "Search location" }), locSel]);
+    const includeRow = el("p", { className: "field" }, [el("label", { htmlFor: key + "-include", textContent: "Include" }), includeSel]);
+
+    const search = el("button", { type: "submit", className: "btn btn--primary", textContent: "Search" });
+    const cancel = el("button", { type: "button", className: "btn btn--ghost", textContent: "Cancel" });
+    cancel.addEventListener("click", leaveSubview);
+
+    const form = el("form", { className: "form ccform", "data-role": "form-" + key }, [
+      ccContext(key), seg, cityRow,
+      el("span", { className: "check" }, [byLoc, el("label", { htmlFor: key + "-byloc", textContent: "Select location" })]),
+      locRow,
+      el("p", { className: "field" }, [el("label", { htmlFor: key + "-trailer", textContent: "Trailer" }), trailerSel]),
+      includeRow,
+      el("fieldset", { className: "ccchecks" }, [
+        el("span", { className: "check" }, [empty, el("label", { htmlFor: key + "-empty", textContent: "Must be empty" })]), vacantRow
+      ]),
+      el("div", { className: "ccfoot" }, [cancel, search]),
+      results
+    ]);
+    ccShell(key, "Repower Options", form);
+
+    byLoc.addEventListener("change", () => { cityRow.hidden = byLoc.checked; locRow.hidden = !byLoc.checked; });
+    seg.addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-mode]");
+      if (!b) return;
+      mode = b.dataset.mode;
+      seg.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      /* A trailer doesn't pass by anywhere and has no "vacant" — fewer options. */
+      includeRow.hidden = mode === "trailer";
+      vacantRow.hidden = mode === "trailer";
+      results.hidden = true;
+    });
+
+    const UNITS = {
+      truck: [
+        { id: "DTL-2147", who: "Micheal Scott", where: "Roanoke, VA", mi: 12, state: "Empty · Available", tone: "green" },
+        { id: "DTL-2209", who: "Dwight Schrute", where: "Salem, VA", mi: 28, state: "Delivering · empty in 2h", tone: "amber" },
+        { id: "DTL-1984", who: "Philip Dunphy", where: "Christiansburg, VA", mi: 41, state: "Empty · Available", tone: "green" },
+        { id: "DTL-2310", who: "Jim Halpert", where: "Lynchburg, VA", mi: 63, state: "In route · passing by", tone: "blue" }
+      ],
+      trailer: [
+        { id: "V305", who: "Reefer · 53'", where: "Roanoke, VA", mi: 4, state: "Empty · Available", tone: "green" },
+        { id: "V311", who: "Reefer · 53'", where: "Salem, VA", mi: 22, state: "Empty · Available", tone: "green" },
+        { id: "D118", who: "Dry Van · 53'", where: "Blacksburg, VA", mi: 37, state: "Loaded · drops tomorrow", tone: "amber" }
+      ]
+    };
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      let list = UNITS[mode];
+      if (empty.checked) list = list.filter((u) => u.state.startsWith("Empty"));
+      results.replaceChildren(
+        el("p", { className: "ccresults__head", textContent: `${list.length} ${mode === "truck" ? "trucks" : "trailers"} near ${byLoc.checked ? "the selected location" : (city.value.trim() || "Roanoke, VA")}` }),
+        ...list.map((u) => {
+          const assign = el("button", { type: "button", className: "fbtn", textContent: "Assign" });
+          assign.addEventListener("click", () => { toast(`${u.id} assigned to ${ccLoadNo()}`); leaveSubview(); });
+          return el("div", { className: "ccunit" }, [
+            el("span", { className: "dunit__tile" }, svg(mode === "truck" ? TRUCK_PATHS : '<rect x="2" y="6" width="19" height="10" rx="1.5"/><circle cx="7" cy="18.5" r="1.5"/><circle cx="14" cy="18.5" r="1.5"/>')),
+            el("span", { className: "ccunit__body" }, [
+              el("b", { textContent: `${u.id} · ${u.who}` }),
+              el("small", { textContent: `${u.where} · ${u.mi} mi away` }),
+              el("span", { className: "dbadge dbadge--" + u.tone, textContent: u.state })
+            ]),
+            assign
+          ]);
+        })
+      );
+      results.hidden = false;
+      revealInPanel(results);
+    });
+  }
+
+  /* ---- Toll / fuel data -------------------------------------------------- */
+  function initTollFuel() {
+    const key = "cc-toll";
+    const DATA = {
+      toll: {
+        stats: [["Toll transactions", "11"], ["Toll miles", "1,745 mi"], ["Total cost", "$4,915.00"]],
+        head: "Load 7659 toll file · uploaded 09/04/2024",
+        rows: [["09/04 · 12:14 PM", "PA Turnpike · Gateway", "PA", "$38.50"], ["09/04 · 1:02 PM", "I-76 · Plaza 12", "PA", "$24.15"],
+          ["09/04 · 3:20 PM", "Ohio Turnpike · Elyria", "OH", "$61.00"], ["09/05 · 7:48 AM", "WV Turnpike · Beckley", "WV", "$13.00"],
+          ["09/05 · 11:05 AM", "Indiana Toll Road · Gary", "IN", "$22.40"]],
+        foot: "Showing 5 of 11 transactions · total $4,915.00"
+      },
+      fuel: {
+        stats: [["Fuel purchases", "3"], ["Gallons", "290.83"], ["MPG", "6.01"], ["Cost / gal", "$4.03"], ["Total fuel cost", "$1,273.00"], ["Fuel usage (actual)", "$1,550.00"]],
+        head: "Load 7659 fuel file · uploaded 09/04/2024",
+        rows: [["09/04 · 6:40 AM", "Love's #482 · Roanoke", "VA", "98.40 gal"], ["09/04 · 4:12 PM", "Pilot #217 · Columbus", "OH", "102.13 gal"],
+          ["09/05 · 8:30 AM", "TA · Beckley", "WV", "90.30 gal"]],
+        foot: "3 transactions · 290.83 gallons · $1,273.00"
+      }
+    };
+    let tab = "toll";
+    const seg = el("div", { className: "dseg ccseg", role: "tablist", "aria-label": "Toll or fuel" }, ["toll", "fuel"].map((t) =>
+      el("button", { type: "button", role: "tab", "data-tab": t, "aria-pressed": String(t === tab), textContent: t === "toll" ? "Toll details" : "Fuel details" })));
+    const stats = el("div", { className: "ccstats" });
+    const head = el("p", { className: "ccintro" });
+    const list = el("ul", { className: "cctx", role: "list" });
+    const foot = el("p", { className: "ccintro" });
+    const exportBtn = el("button", { type: "button", className: "btn btn--ghost", textContent: "Export CSV" });
+    const printBtn = el("button", { type: "button", className: "btn btn--primary", textContent: "Download" });
+    exportBtn.addEventListener("click", () => toast("Toll / fuel data exported"));
+    printBtn.addEventListener("click", () => toast("Download started"));
+    const paint = () => {
+      const d = DATA[tab];
+      stats.replaceChildren(...d.stats.map(([k, v]) => el("div", { className: "ccstat" }, [el("small", { textContent: k }), el("b", { textContent: v })])));
+      head.textContent = d.head;
+      list.replaceChildren(...d.rows.map(([when, where, st, amt]) => el("li", {}, [
+        el("span", {}, [el("b", { textContent: where }), el("small", { textContent: when })]),
+        el("span", { className: "cctx__st", textContent: st }), el("span", { className: "cctx__amt", textContent: amt })
+      ])));
+      foot.textContent = d.foot;
+    };
+    seg.addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-tab]");
+      if (!b) return;
+      tab = b.dataset.tab;
+      seg.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      paint();
+    });
+    paint();
+    ccShell(key, "Toll & Fuel Data", el("div", { className: "form ccform" }, [
+      ccContext(key), seg, stats, head, list, foot, el("div", { className: "ccfoot" }, [exportBtn, printBtn])
+    ]));
+  }
+
+  /* ---- Invoice / payments ------------------------------------------------ */
+  function initInvoice() {
+    const key = "cc-invoice";
+    const amt = el("input", { id: key + "-amt", name: "amt", type: "text", value: "$ ", autocomplete: "off" });
+    const method = el("select", { id: key + "-m", name: "m" }, ["ACH", "Check", "Wire", "Factoring advance"].map((o) => el("option", { textContent: o })));
+    const ref = el("input", { id: key + "-ref", name: "ref", type: "text", placeholder: "Optional", autocomplete: "off" });
+    const send = el("button", { type: "button", className: "btn btn--ghost", textContent: "Send invoice" });
+    send.addEventListener("click", () => { toast("Invoice sent to Total Quality Logistics"); });
+    const form = el("form", { className: "form ccform", "data-role": "form-" + key }, [
+      ccContext(key),
+      el("h5", { className: "ccsec", textContent: "Invoice summary" }),
+      el("dl", { className: "ccrows" }, [
+        ["Customer", "Total Quality Logistics"], ["Line haul", "$4,200.00"], ["Fuel surcharge", "$515.00"], ["Detention", "$120.00"],
+        ["Invoice total", "$4,835.00"], ["Paid", "$0.00"], ["Balance due", "$4,835.00"], ["Status", "Not sent"]
+      ].flatMap(([k, v]) => [el("dt", { textContent: k }), el("dd", { textContent: v })])),
+      el("h5", { className: "ccsec", textContent: "Record a payment" }),
+      el("p", { className: "field" }, [el("label", { htmlFor: key + "-amt", textContent: "Amount" }), amt]),
+      el("p", { className: "field" }, [el("label", { htmlFor: key + "-m", textContent: "Method" }), method]),
+      el("p", { className: "field" }, [el("label", { htmlFor: key + "-ref", textContent: "Reference" }), ref]),
+      el("div", { className: "ccfoot" }, [send, el("button", { type: "submit", className: "btn btn--primary", textContent: "Record payment" })])
+    ]);
+    ccShell(key, "Invoice / Payments", form);
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!/\d/.test(amt.value)) { toast("Enter a payment amount"); return; }
+      toast(`Payment of ${amt.value.trim()} recorded`);
+      leaveSubview();
+    });
+  }
+
+  /* ---- Post to loadboard ------------------------------------------------- */
+  function initPostLoadboard() {
+    const key = "cc-post";
+    const f = (id, label, node) => el("p", { className: "field" }, [el("label", { htmlFor: `${key}-${id}`, textContent: label }), node]);
+    const txt = (id, value = "", ph = "") => { const i = el("input", { id: `${key}-${id}`, type: "text", value, placeholder: ph, autocomplete: "off" }); return i; };
+    const sel = (id, opts) => el("select", { id: `${key}-${id}` }, opts.map((o) => el("option", { textContent: o })));
+    const boards = CC_BOARDS.map((b, i) => {
+      const box = el("input", { id: `${key}-b${i}`, type: "checkbox" });
+      box.checked = i === 0;
+      return { b, box, row: el("span", { className: "check" }, [box, el("label", { htmlFor: `${key}-b${i}`, textContent: b })]) };
+    });
+    const all = el("input", { id: key + "-all", type: "checkbox" });
+    const count = el("p", { className: "ccintro" });
+    const sync = () => { const n = boards.filter((x) => x.box.checked).length; count.textContent = `${n} loadboard${n === 1 ? "" : "s"} selected`; all.checked = n === boards.length; };
+    boards.forEach((x) => x.box.addEventListener("change", sync));
+    all.addEventListener("change", () => { boards.forEach((x) => { x.box.checked = all.checked; }); sync(); });
+    sync();
+
+    const cancel = el("button", { type: "button", className: "btn btn--ghost", textContent: "Cancel" });
+    cancel.addEventListener("click", leaveSubview);
+    const form = el("form", { className: "form ccform", "data-role": "form-" + key }, [
+      ccContext(key),
+      el("p", { className: "ccintro", textContent: "Review this load's shipment details, then choose where to post it." }),
+      el("h5", { className: "ccsec", textContent: "Shipment details" }),
+      f("dt", "Date & time", txt("dt", "03/15/2026  08:00 AM")),
+      el("div", { className: "ccpair" }, [f("len", "Length", txt("len", "53 ft")), f("wt", "Weight", txt("wt", "12,000 lb"))]),
+      f("ref", "Reference #", txt("ref", "174AB")),
+      f("lt", "Load type", sel("lt", ["Select Load Type", "Full Truckload (FTL)", "Less Than Truckload (LTL)", "Partial", "Both"])),
+      f("tt", "Trailer type", sel("tt", ["Select Type", ...CC_TRAILERS])),
+      f("o", "Origin city / state", txt("o", "Fairfield, CA")),
+      f("d", "Destination city / state", txt("d", "Roanoke, VA")),
+      f("c1", "Comments 1", txt("c1")),
+      f("c2", "Comments 2", txt("c2")),
+      el("h5", { className: "ccsec", textContent: "Post to" }),
+      el("fieldset", { className: "ccchecks" }, [
+        el("span", { className: "check" }, [all, el("label", { htmlFor: key + "-all", textContent: "Select all" })]),
+        ...boards.map((x) => x.row)
+      ]),
+      count,
+      el("div", { className: "ccfoot" }, [cancel, el("button", { type: "submit", className: "btn btn--primary", textContent: "Post" })])
+    ]);
+
+    const done = el("div", { className: "ccdone", hidden: true });
+    ccShell(key, "Post to Loadboard", [form, done]);
+    $$('[data-cmd]').filter((b) => b.textContent.trim() === "Post to loadboard").forEach((b) => { b.dataset.base = "Post to loadboard"; });
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const picked = boards.filter((x) => x.box.checked).map((x) => x.b);
+      if (!picked.length) { toast("Choose at least one loadboard"); return; }
+      form.hidden = true;
+      const finish = el("button", { type: "button", className: "btn btn--primary btn--block", textContent: "Done" });
+      finish.addEventListener("click", () => { form.hidden = false; done.hidden = true; leaveSubview(); });
+      done.replaceChildren(
+        el("span", { className: "ccdone__ic" }, svg('<path d="m5 12.5 4.5 4.5L19 7.5"/>')),
+        el("h4", { textContent: "Load posted" }),
+        el("p", { textContent: `${ccLoadNo()} is now live on ${picked.length} loadboard${picked.length === 1 ? "" : "s"}.` }),
+        el("ul", { className: "ccdone__list", role: "list" }, picked.map((p) => el("li", { textContent: p }))),
+        finish
+      );
+      done.hidden = false;
+      /* Once posted, the button reads "Edit loadboard", like the Command Center. */
+      $$("[data-cmd]").filter((b) => b.dataset.base === "Post to loadboard").forEach((b) => { b.textContent = "Edit loadboard"; });
+    });
+  }
+
+  /* Which sidebar view each Command Center button opens. */
+  const CC_VIEW = {
+    "Edit load": "cc-edit-load", "Request check call": "request-location", "Resend to driver": "request-document",
+    "Repower options": "cc-repower", "Issue funds": "cc-funds", "BOL generator": "cc-bol", "Invoice / payments": "cc-invoice",
+    "Copy load": "cc-copy", "Toll / fuel data": "cc-toll", "OS&D": "cc-osd", "Post to loadboard": "cc-post", "Edit loadboard": "cc-post"
+  };
+  function openCommand(name, fromView) {
+    if (name === "Track and trace") { openTrackingHistory(); return true; }
+    const view = CC_VIEW[name];
+    if (!view) return false;
+    state.backTo = fromView || state.view;
+    /* Every flow names the load it acts on. */
+    const no = ccLoadNo();
+    $$('[data-role^="cc-load-"]').forEach((n) => { n.textContent = no; });
+    setView(view);
+    return true;
+  }
+
+  initCommandForms();
+
   $$("select").forEach(enhanceSelect);
 
   $$('[data-action="copy-link"]').forEach((btn) => btn.addEventListener("click", (e) => {
@@ -8871,15 +9978,36 @@ button.drow:hover .drow__copy { opacity: 1; color: var(--d-blue); }
   });
 
   /* Driver panel rows: one button per row opens/closes its body. */
-  function setAcc(acc, open) {
+  function setAcc(acc, open, scroll = true) {
     acc.classList.toggle("is-open", open);
     acc.querySelector(".acc__head").setAttribute("aria-expanded", String(open));
     acc.querySelector(".acc__body").hidden = !open;
+    /* A section that opens below the fold scrolls itself into view. */
+    if (open && scroll) revealInPanel(acc);
+    syncExpandAll(acc.parentElement);
   }
   $$(".acc__head").forEach((h) => h.addEventListener("click", () => {
     const acc = h.closest(".acc");
     setAcc(acc, !acc.classList.contains("is-open"));
   }));
+
+  /* "Expand all" in the hero card opens (or closes) every section in the view. */
+  const viewAccs = (view) => Array.from(view.children).filter((n) => n.classList.contains("acc") && !n.hidden);
+  function syncExpandAll(view) {
+    const btn = view && view.querySelector(":scope > .card--hero > .hero__expand");
+    if (!btn) return;
+    const all = viewAccs(view).every((a) => a.classList.contains("is-open"));
+    btn.setAttribute("aria-pressed", String(all));
+    btn.firstElementChild.textContent = all ? "Collapse all" : "Expand all";
+  }
+  $$('[data-action="expand-all"]').forEach((btn) => btn.addEventListener("click", () => {
+    const view = btn.closest(".view");
+    const open = btn.getAttribute("aria-pressed") !== "true";
+    viewAccs(view).forEach((a) => setAcc(a, open, false));
+    syncExpandAll(view);
+    if (open) { const first = viewAccs(view)[0]; if (first) revealInPanel(first); }
+  }));
+  $$(".details .view").forEach((v) => syncExpandAll(v));
 
   /* HOS panel — opens inline below whichever card's icon row was clicked
      (the connected Details card or the Personal Info card). */
