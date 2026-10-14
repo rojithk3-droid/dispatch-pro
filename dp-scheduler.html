@@ -223,7 +223,7 @@ body.assign .track{cursor:copy}
 .hos i{position:absolute;top:0;height:100%;display:block;cursor:help;border-radius:2px}
 .hos i:hover{filter:brightness(1.12);box-shadow:0 0 0 1px rgba(0,0,0,.18)}
 .hoslabel{position:absolute;left:0;bottom:4px;font-size:9px;color:#a8aeb5;letter-spacing:.04em}
-.fuel{position:absolute;bottom:14px;width:18px;height:18px;margin-left:-9px;border:0;border-radius:4px;background:none;
+.fuel{position:absolute;bottom:15px;width:14px;height:14px;margin-left:-7px;border:0;border-radius:4px;background:none;
   display:flex;align-items:center;justify-content:center;cursor:help;z-index:4}
 .fuel svg{width:11px;height:11px;fill:currentColor}
 .fuel.ok{color:#8a9099} .fuel.bad{color:var(--eld-off)}
@@ -432,6 +432,10 @@ body.assign .track{cursor:copy}
 .expanded .row{min-height:92px}
 .row.open{transition:min-height .14s ease}
 .expanded .stops{display:flex;align-items:center}
+/* stacked bars share one strip: only the top bar keeps its stop line, so the lines never print over each other; opened stacks give each its own line */
+.expanded .cl.multi:not(.open) .slot:not(:first-child) .stops{display:none}
+.expanded .cl.multi:not(.open) .slot:first-child .stops{text-overflow:ellipsis;top:66px}   /* stacked bars step down 3px each, so the line sits under the deepest one */
+.expanded .cl.multi.open .slot .stops{top:calc(44px + var(--i) * 40px);height:13px;line-height:13px}
 
 table{border-collapse:collapse;width:100%}
 th{background:#f2f6f9;color:var(--navy);font-size:11px;text-align:left;padding:6px 9px;border-bottom:1px solid var(--line);white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
@@ -494,6 +498,15 @@ tr:last-child td{border-bottom:0}
 .row:hover .lane,.row.sel .lane{background:#eef4fb;box-shadow:none}
 .who{gap:8px;align-items:flex-start;position:relative}
 .av{width:40px;height:40px;border:0;background:#f1f2f5}
+.gridwrap .lane .av,.gridwrap .lane .xph{cursor:pointer}
+.gridwrap .lane .av:hover,.gridwrap .lane .xph:hover{box-shadow:0 0 0 2px #1a73e8}
+.gridwrap .lane .av.tru{display:flex;align-items:center;justify-content:center;border:1px solid #dadce3;cursor:default}
+.tface{object-fit:contain}
+.hrow .lane{display:flex;align-items:center;gap:8px}
+.timerow .lctl{margin-top:10px}
+.laneseg{display:inline-flex;margin-left:auto;padding:2px;border-radius:8px;background:#eef0f4}
+.laneseg button{border:0;background:none;padding:2px 9px;border-radius:6px;font:600 11px/16px Inter,"Segoe UI",Arial,sans-serif;color:#616376;cursor:pointer}
+.laneseg button[aria-pressed=true]{background:#fff;color:#14161f;box-shadow:0 1px 2px rgba(20,28,40,.15)}
 .av img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
 .av.ini{border:1px solid #dadce3;background:#f1f2f5;color:#4b4f66;font-size:12px;font-weight:600}
 .nm{padding-top:3px}
@@ -504,7 +517,7 @@ tr:last-child td{border-bottom:0}
 .dlab{font-size:10px;font-weight:500;color:#14161f;margin-left:-2px}
 .home{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:500;color:#616376;margin-top:2px;line-height:15px}
 .dbk{width:12px;height:12px;color:#e0272c;flex:none}
-.gact{margin-left:auto;align-self:flex-start;height:44px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;flex:none;margin-top:-6px;margin-right:-6px}
+.gact{margin-left:auto;align-self:center;height:44px;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;flex:none;margin-top:-6px;margin-right:-6px}
 .kebab{width:20px;height:20px;border:0;background:none;padding:0;color:#616376;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .kebab:hover{background:#e3eaf3;color:#14161f}
 .kebab svg{width:14px;height:14px}
@@ -522,7 +535,14 @@ tr:last-child td{border-bottom:0}
 #dcard a,#dcard button{width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;padding:0;border:1px solid #d3d6de;border-radius:50%;
   background:#fff;color:#14161f;text-decoration:none;cursor:pointer}
 #dcard a:hover,#dcard button:hover{background:#eef4fb;border-color:var(--fblue);color:var(--fblue)}
-#dcard svg{width:20px;height:20px}
+#dcard svg{width:14px;height:14px}
+#dcard{padding:6px 8px}
+#dcard.on{gap:6px}
+#dcard a,#dcard button{width:28px;height:28px;position:relative}
+#dcard .dci{font-size:10.5px}
+#dcard [data-tip]::after{content:attr(data-tip);position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);padding:3px 7px;border-radius:5px;
+  background:#000;color:#fff;font:500 10.5px/14px Inter,"Segoe UI",Arial,sans-serif;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s;z-index:2}
+#dcard [data-tip]:hover::after{opacity:1}
 
 /* ---------- expanded driver card (Figma node 4:5420) ---------- */
 .gridwrap.expanded{--lane:337px}
@@ -703,13 +723,13 @@ body.rp-open #rp{width:310px;visibility:visible}
 .rpmeter .t i{display:block;height:100%;border-radius:3px;background:var(--hk)}
 .rpmeter .n{display:flex;justify-content:space-between;gap:9px;margin-top:5px;font-size:9px;line-height:13px;color:#6b7280}
 .rpmeter .n b{color:#4b4f66;font-weight:650}
-.rpdrv{display:flex;gap:9px}
-.rpdrv .av{width:27px;height:27px;flex:none}
-.rpdrv .nm{display:flex;align-items:center;gap:5px;font-size:11px;line-height:15px;font-weight:600;color:#14161f}
-.rpdrv .duty{font-size:8px;font-weight:700;line-height:14px;height:14px;padding:0 3px;border-radius:4px;color:#fff}
+.rpdrv{display:flex;gap:12px;align-items:center;padding:4px 0;border:0;border-radius:0;background:none;margin-top:4px}
+.rpdrv .av{width:56px;height:56px;flex:none;font-size:18px;box-shadow:0 0 0 2px #fff,0 0 0 3px #c9d6e8}
+.rpdrv .nm{display:flex;align-items:center;gap:5px;font-size:15px;line-height:20px;font-weight:700;color:#14161f}
+.rpdrv .duty{font-size:10px;font-weight:700;line-height:17px;height:17px;padding:0 5px;border-radius:4px;color:#fff}
 .rpdrv .d-OF{background:#f00}.rpdrv .d-SB{background:#000}.rpdrv .d-D{background:#19c936}.rpdrv .d-ON{background:#ff6d10}
-.rpdrv .l2{margin-top:1px;font-size:10px;line-height:14px;color:#4b4f66}
-.rpdrv .l3{font-size:9px;line-height:14px;color:#6b7280}
+.rpdrv .l2{margin-top:1px;font-size:12px;line-height:17px;font-weight:500;color:#2f3347}
+.rpdrv .l3{font-size:11px;line-height:16px;color:#5a6072}
 .rpstops{display:flex;flex-direction:column}
 .rpstop{position:relative;display:flex;gap:9px;padding-bottom:13px;min-width:0}
 .rpstop:last-child{padding-bottom:0}
@@ -933,6 +953,35 @@ button.lg:hover{background:#f1f6fb}
 .dd.open .ddmenu{display:block}
 .ddopt{display:block;width:100%;text-align:left;background:none;border:0;padding:6px 10px;font-size:12px;color:var(--ink);cursor:pointer;border-radius:2px;white-space:nowrap}
 .ddopt:hover,.ddopt:focus,.ddopt.on{background:var(--pick-bg);color:var(--pick-fg);font-weight:bold;outline:none}
+/* ---------- dropdowns: the agent-pay-profile select design (trigger + fixed panel, blue hover, check on the chosen row) ---------- */
+.sdd{position:relative;display:block;min-width:0}
+.sdd-native{position:absolute !important;opacity:0;pointer-events:none;width:0 !important;height:0 !important;min-width:0 !important;padding:0 !important;border:0 !important}
+.sdd-t{width:100%;display:flex;align-items:center;justify-content:space-between;gap:6px;box-sizing:border-box;border:1px solid #d7dbdf;border-radius:7px;background:#fff;padding:0 10px;
+  font:400 12px/16px Inter,"Segoe UI",Arial,sans-serif;color:#14161f;cursor:default;outline:0;box-shadow:0 1px 2px rgba(20,28,40,.05);transition:border-color .15s,box-shadow .15s}
+.sdd-t:hover{border-color:var(--fblue)}
+.sdd-t:disabled{opacity:.5;cursor:not-allowed}
+.sdd-v{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+.sdd-v.ph{color:#8a9099}
+.sdd-t svg{width:13px;height:13px;flex:none;opacity:.5;transition:transform .15s}
+.sdd.open .sdd-t{border-color:var(--fblue);box-shadow:0 0 0 3px rgba(13,110,253,.12)}
+.sdd.open .sdd-t svg{transform:rotate(180deg)}
+.sdd-t.bad{border-color:#dc3545}
+.sdd-p{position:fixed;z-index:3000;min-width:120px;max-height:260px;overflow-y:auto;box-sizing:border-box;padding:3px;background:#fff;border:1px solid #e3e7ee;border-radius:7px;
+  box-shadow:0 10px 24px rgba(20,28,40,.14),0 2px 6px rgba(20,28,40,.06);font-family:Inter,"Segoe UI",Arial,sans-serif}
+.sdd-p[hidden]{display:none}
+.sdd-i{position:relative;display:flex;align-items:center;min-width:100%;width:max-content;box-sizing:border-box;border:0;background:none;text-align:left;padding:6px 28px 6px 8px;border-radius:5px;
+  font:400 12px/16px Inter,"Segoe UI",Arial,sans-serif;color:#14161f;cursor:default;white-space:nowrap;outline:0}
+.sdd-i:hover,.sdd-i.hi{background:#eef4fb;color:var(--fblue)}
+.sdd-i.on{font-weight:500}
+.sdd-i .ck{position:absolute;right:8px;width:14px;height:14px;display:none}
+.sdd-i.on .ck{display:block}
+.sdd-p::-webkit-scrollbar{width:6px}.sdd-p::-webkit-scrollbar-thumb{background:#d7dbdf;border-radius:99px}
+/* the board's own dropdown menus share the same panel look */
+.ddmenu{border-color:#e3e7ee !important;border-radius:7px !important;padding:3px !important;box-shadow:0 10px 24px rgba(20,28,40,.14),0 2px 6px rgba(20,28,40,.06) !important}
+.ddopt{border-radius:5px !important;padding:6px 8px !important;font-weight:400}
+.ddopt:hover,.ddopt:focus{background:#eef4fb !important;color:var(--fblue) !important;font-weight:400 !important}
+.ddopt.on{background:none !important;color:var(--ink) !important;font-weight:500 !important}
+.ddopt.on:hover{background:#eef4fb !important;color:var(--fblue) !important}
 
 .chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 11px 10px}
 .chip{display:inline-flex;align-items:center;gap:7px;background:#eef4ff;color:#3266c4;border:1px solid #d5e1f8;border-radius:5px;font-size:11.5px;padding:2px 5px 2px 9px}
@@ -1102,7 +1151,7 @@ body.tk-open .mainrow>.shell,body.tk-open #lp,body.tk-open #rp{display:none}
 .fmi:hover svg,.fmi:focus-visible svg{color:#1a73e8}
 .fmd{height:1px;background:#eceff3;margin:4px 6px}
 .rsvtag{display:inline-flex;align-items:center;height:14px;padding:0 5px;margin-left:6px;border:1px solid #f4b3b5;border-radius:4px;background:#fdf1f1;color:#d12328;font-size:8.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
-.xkeb{position:absolute;right:8px;top:30px;width:20px;height:20px;border:0;border-radius:4px;background:none;color:#616376;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.xkeb{position:absolute;right:8px;top:62px;width:20px;height:20px;border:0;border-radius:4px;background:none;color:#616376;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
 .xkeb:hover{background:#e3eaf3;color:#14161f}
 .xkeb svg{width:14px;height:14px}
 
@@ -1146,6 +1195,14 @@ body.tk-open .mainrow>.shell,body.tk-open #lp,body.tk-open #rp{display:none}
 
 .fl,.fp label.fl,.fw label.fl{display:block;font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#6b6f80;margin:0 0 6px}
 .fi,.fsel,.fta{width:100%;height:32px;border:1px solid #d7dbdf;border-radius:7px;padding:0 10px;background:#fff;color:#14161f;font:400 12px/16px Inter,"Segoe UI",Arial,sans-serif}
+.bsel{position:relative}
+.bsl{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:20;max-height:190px;overflow:auto;background:#fff;border:1px solid #dcdfe6;border-radius:8px;box-shadow:0 8px 20px rgba(20,28,40,.14);padding:4px}
+.bsl[hidden]{display:none}
+.bsi{display:flex;flex-direction:column;align-items:flex-start;gap:1px;width:100%;padding:6px 8px;border:0;border-radius:6px;background:none;text-align:left;cursor:pointer;font-family:inherit}
+.bsi b{font-size:12px;font-weight:600;color:#14161f}.bsi span{font-size:10.5px;color:#6b6f80}
+.bsi:hover{background:#eef4fb}
+.bsn{padding:8px;font-size:11px;color:#6b6f80}
+#lgMc[readonly]{background:#f6f7f9;color:#4b4f66}
 .fsel{padding-right:26px;appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%236b737c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m1 1 4 4 4-4'/%3E%3C/svg%3E") no-repeat right 10px center}
 .fta{height:auto;min-height:84px;padding:8px 10px;resize:vertical}
 .fi:focus,.fsel:focus,.fta:focus{outline:0;border-color:#0d6efd;box-shadow:0 0 0 3px rgba(13,110,253,.12)}
@@ -1176,6 +1233,13 @@ body.tk-open .mainrow>.shell,body.tk-open #lp,body.tk-open #rp{display:none}
 .ftbl tr:last-child td{border-bottom:0}
 .ftbl tbody tr:hover td{background:#f3f8ff}
 .ftbl .num{text-align:right;font-variant-numeric:tabular-nums}
+/* Find / Match Freight: the whole table fits the modal, cells wrap instead of scrolling sideways */
+#ffBody .ftw{overflow-x:hidden}
+#ffBody .ftbl{min-width:0 !important;table-layout:auto;font-size:11px;line-height:14px}
+#ffBody .ftbl th,#ffBody .ftbl td{white-space:normal;padding:8px 6px;overflow-wrap:anywhere}
+#ffBody .ftbl th{font-size:9px;letter-spacing:.04em}
+#ffBody .ftbl td:last-child{white-space:normal;min-width:78px}
+#ffBody .ftbl td:last-child .fbtn{display:block;width:100%;margin:0 0 4px}
 .ftbl .mut{color:#6b6f80}
 .ftbl a,.ftbl .flink{color:#1a73e8;text-decoration:none}
 .fsrc{display:inline-flex;align-items:center;gap:7px;font-weight:600}
@@ -1261,6 +1325,11 @@ body.tk-open .mainrow>.shell,body.tk-open #lp,body.tk-open #rp{display:none}
 .etool{display:flex;align-items:center;gap:6px;padding:7px 14px;border-bottom:1px solid #eceff3;background:#f6f8fb;flex-wrap:wrap}
 .etool select{height:26px;border:1px solid #e3e7ee;border-radius:6px;background:#fff;font:500 11.5px/14px Inter,"Segoe UI",Arial,sans-serif;padding:0 6px}
 .etool button{width:26px;height:26px;border:1px solid #e3e7ee;border-radius:6px;background:#fff;color:#3c4150;font:700 11.5px/1 Inter,"Segoe UI",Arial,sans-serif;cursor:pointer;padding:0}
+.etool .sdd{flex:none;width:64px}
+.etool .sdd:has(#emTpl){width:176px}
+.etool .sdd:has(#emFont){width:104px}
+.etool .sdd-t{width:100%;height:26px;padding:0 8px;font:500 11.5px/14px Inter,"Segoe UI",Arial,sans-serif;color:#14161f;justify-content:space-between;cursor:default}
+.etool .sdd-t svg{width:12px;height:12px}
 .etool button:hover{background:#eef4fb;border-color:#1a73e8;color:#1a73e8}
 .ebody{min-height:190px;max-height:300px;overflow:auto;padding:12px 14px;font-size:13px;line-height:19px;outline:0}
 .ebody:empty::before{content:attr(data-ph);color:#98a1ab}
@@ -1307,7 +1376,7 @@ body.tk-open .mainrow>.shell,body.tk-open #lp,body.tk-open #rp{display:none}
 .ftrip{position:absolute;left:14px;top:14px;bottom:14px;width:262px;background:#fff;border:1px solid #e3e7ee;border-radius:10px;overflow:auto;box-shadow:0 6px 18px rgba(20,28,40,.12)}
 .ftrip .th{display:flex;align-items:center;gap:6px;padding:10px 12px;border-bottom:1px solid #eceff3}
 .ftrip .th b{font-size:13px;font-weight:600;flex:1}
-.ftrip .th .hos{font-size:9.5px;font-weight:700;color:#305f9c}
+.ftrip .th .hos{position:static;height:auto;background:none;border-radius:0;font-size:9.5px;font-weight:700;color:#305f9c}
 .ftrip .tm2{padding:8px 12px;font-size:10.5px;color:#6b6f80;border-bottom:1px solid #eceff3}
 .ftrip .tm2 b{color:#14161f}
 .fstop{display:flex;gap:9px;padding:10px 12px;border-bottom:1px solid #eceff3}
@@ -2108,10 +2177,17 @@ function avHtml(dr){
   var ini=dr.n.replace(/,/g,"").split(/\s+/).map(function(w){return w.charAt(0)}).join("").slice(0,2).toUpperCase();
   return '<div class="av ini">'+ini+'</div>';
 }
+var LANEBY="driver";            /* the board's left column: "driver" or "truck" */
+function laneSeg(){
+  return '<div class="laneseg" role="group" aria-label="Show board by">'+["driver","truck"].map(function(k){
+    return '<button type="button" data-laneby="'+k+'" aria-pressed="'+(LANEBY===k)+'">'+(k==="driver"?"Driver":"Truck")+'</button>';
+  }).join("")+'</div>';
+}
+function truckFace(sz){ return '<img class="tface" src="assets/planner/xl-truck.svg" alt="" width="'+sz+'" height="'+sz+'">' }
 function drawBoard(){
   var list=visible();
   var head='<div class="hrow"><div class="lane">'+
-      '<span class="hcount">'+(list.length===DRIVERS.length?list.length+' Total Drivers':list.length+' of '+DRIVERS.length+' Drivers')+'</span></div>'+
+      '<span class="hcount">'+(list.length===DRIVERS.length?list.length+(LANEBY==="truck"?' Total Trucks':' Total Drivers'):list.length+' of '+DRIVERS.length+(LANEBY==="truck"?' Trucks':' Drivers'))+'</span>'+laneSeg()+'</div>'+
     '<div class="track" data-head="1"><div class="pan">'+dayCells()+
     '</div></div></div>'+
     '<div class="timerow"><div class="lane"><div class="lctl"><button class="xlink" data-xtoggle="1">'+($("#cexpand").checked?"Collapse":"Expand")+'</button>'+
@@ -2194,19 +2270,19 @@ var XLPHOTO={"Lacy Harris":"xl-lacy-harris","Philip Sam":"xl-philip-sam","Sam Wi
   "John Walker":"xl-john-walker","Isaiah Bradley":"xl-isaiah-bradley","John Simon":"xl-john-simon","Micheal, Smith":"xl-micheal-smith","Markus, Levin":"xl-markus-levin"};
 function xlLane(dr,det){
   var f=XLPHOTO[dr.n], ini=dr.n.replace(/,/g,"").split(/\s+/).map(function(w){return w.charAt(0)}).join("").slice(0,2).toUpperCase();
-  var ph=f?'<img src="assets/planner/'+f+'.png" alt="" width="115" height="115">':'<span>'+ini+'</span>';
+  var tr=LANEBY==="truck";
+  var ph=tr?truckFace(52):f?'<img src="assets/planner/'+f+'.png" alt="" width="115" height="115">':'<span>'+ini+'</span>';
   var big=dr.duty==="D";
   var stat=onLoadNow(dr)?"Arrived (Stop 1)":Math.round(openHours(dr))+"h open";
   return '<div class="lane xl"><div class="xcard">'+
-    '<div class="xph'+(f?'':' ini')+'">'+ph+'</div>'+
-    '<b class="xnm">'+esc(dr.n)+'</b>'+
-    '<span class="xcity">'+esc(dr.home)+'</span>'+
+    '<div class="xph'+(f&&!tr?'':' ini')+'">'+ph+'</div>'+
+    '<b class="xnm">'+esc(tr?dr.truck:dr.n)+'</b>'+
+    '<span class="xcity">'+esc(tr?dr.n:dr.home)+'</span>'+
     '<div class="xduty"><span class="xchip '+(big?"big ":"")+'d-'+dr.duty+'">'+dr.duty+'</span><span class="xlab">'+DUTYLAB[dr.duty]+'</span><span class="xstat">'+stat+'</span></div>'+
     '<div class="xeq xtruck"><img src="assets/planner/xl-truck.svg" alt="" width="23" height="23"><span>'+dr.truck+'</span></div>'+
     '<div class="xeq xtrail"><span class="xtile"><img src="assets/planner/xl-trailer.svg" alt="" width="13.2" height="8.8"></span><span>'+dr.trailer+'</span></div>'+
     '<span class="xres'+(overbooked(dr)?" bad":"")+'">Reserved</span>'+
     '<button class="xkeb" data-kebab="'+esc(dr.n)+'" title="Driver actions" aria-label="Driver actions for '+esc(dr.n)+'">'+KEBAB+'</button>'+
-    '<button class="xmore" data-more="'+esc(dr.n)+'" aria-expanded="'+(openRows[dr.n]?"true":"false")+'"><img src="assets/planner/speed.png" alt="" width="15" height="15"><span>'+(openRows[dr.n]?"less":"more")+'</span></button>'+
     '</div>'+det+'</div>';
 }
 function rsvTag(dr){
@@ -2220,14 +2296,13 @@ function detHtml(dr){
 }
 function laneHtml(dr,XL,det){
   return XL?xlLane(dr,det):'<div class="lane"><div class="who">'+
-      avHtml(dr)+
+      (LANEBY==="truck"?'<div class="av tru">'+truckFace(22)+'</div>':avHtml(dr))+
       '<div class="nm">'+
-        '<div class="nmline"><b>'+esc(dr.n)+'</b><span class="duty d-'+dr.duty+'">'+dr.duty+'</span><span class="dlab">'+DUTYLAB[dr.duty]+'</span></div>'+
-        '<span class="home">'+esc(dr.home)+rsvTag(dr)+(overbooked(dr)?'<svg class="dbk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Double-booked"><title>Double-booked</title><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>':'')+'</span>'+
+        '<div class="nmline"><b>'+esc(LANEBY==="truck"?dr.truck:dr.n)+'</b><span class="duty d-'+dr.duty+'">'+dr.duty+'</span><span class="dlab">'+DUTYLAB[dr.duty]+'</span></div>'+
+        '<span class="home">'+esc(LANEBY==="truck"?dr.n+" · "+dr.home:dr.home)+rsvTag(dr)+(overbooked(dr)?'<svg class="dbk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Double-booked"><title>Double-booked</title><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>':'')+'</span>'+
         det+
       '</div>'+
-      '<div class="gact"><button class="kebab" data-kebab="'+esc(dr.n)+'" title="Driver actions" aria-label="Driver actions for '+esc(dr.n)+'">'+KEBAB+'</button>'+
-        '<button class="more" data-more="'+esc(dr.n)+'" aria-expanded="'+(openRows[dr.n]?"true":"false")+'">'+GAUGE+'<span>'+(openRows[dr.n]?"Less":"More")+'</span></button></div>'+
+      '<div class="gact"><button class="kebab" data-kebab="'+esc(dr.n)+'" title="Driver actions" aria-label="Driver actions for '+esc(dr.n)+'">'+KEBAB+'</button></div>'+
     '</div></div>';
 }
 function rowHtml(dr){
@@ -2640,26 +2715,25 @@ var DC_ICO={
 };
 function dcIco(k){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+DC_ICO[k]+'</svg>'}
 var dcTimer=null, dcRow=null;
-function dcShow(row){
+function dcShow(row,face){
   if($("#fmenu").classList.contains("on")||$("#fstack").classList.contains("on")) return;
   var dr=DRIVERS.filter(function(d){return d.n===row.dataset.drv})[0];
   if(!dr) return;
   var card=$("#dcard"), tel=String(dr.phone).replace(/[^\d+]/g,"");
   if(dcRow!==row){
     card.innerHTML=
-      (document.body.classList.contains("mapmode")&&window.dpWhere?'<div class="dci">'+window.dpWhere(dr)+'</div>':'')+
-      '<button type="button" data-dc="call" data-dn="'+esc(dr.n)+'" title="Call '+esc(dr.n)+'" aria-label="Call">'+dcIco("call")+'</button>'+
-      '<button type="button" data-dc="sms" data-dn="'+esc(dr.n)+'" title="Text '+esc(dr.n)+'" aria-label="SMS">'+dcIco("sms")+'</button>'+
-      '<button type="button" data-dc="chat" data-dn="'+esc(dr.n)+'" title="ProChat with '+esc(dr.n)+'" aria-label="ProChat">'+dcIco("chat")+'</button>'+
-      '<button type="button" data-dc="mail" data-dn="'+esc(dr.n)+'" title="Email '+esc(dr.n)+'" aria-label="Email">'+dcIco("mail")+'</button>'+
-      '<button type="button" data-dc="hist" data-dn="'+esc(dr.n)+'" title="Contact history" aria-label="History">'+dcIco("hist")+'</button>';
+      '<button type="button" data-dc="call" data-dn="'+esc(dr.n)+'" data-tip="Call" aria-label="Call">'+dcIco("call")+'</button>'+
+      '<button type="button" data-dc="sms" data-dn="'+esc(dr.n)+'" data-tip="Text" aria-label="SMS">'+dcIco("sms")+'</button>'+
+      '<button type="button" data-dc="chat" data-dn="'+esc(dr.n)+'" data-tip="ProChat" aria-label="ProChat">'+dcIco("chat")+'</button>'+
+      '<button type="button" data-dc="mail" data-dn="'+esc(dr.n)+'" data-tip="Email" aria-label="Email">'+dcIco("mail")+'</button>'+
+      '<button type="button" data-dc="hist" data-dn="'+esc(dr.n)+'" data-tip="History" aria-label="History">'+dcIco("hist")+'</button>';
     dcRow=row;
   }
-  var r=row.querySelector(".lane").getBoundingClientRect();
+  var r=(face||row.querySelector(".lane")).getBoundingClientRect();
   card.classList.add("on");
-  card.style.left=Math.max(6,Math.min(window.innerWidth-card.offsetWidth-8,r.left+(r.width-card.offsetWidth)/2))+"px";
-  var ty=r.bottom-6;                       /* just under the driver info; flip above the row at the screen edge */
-  if(ty+card.offsetHeight>window.innerHeight-8) ty=r.top-card.offsetHeight+6;
+  card.style.left=Math.max(6,Math.min(window.innerWidth-card.offsetWidth-8,r.left))+"px";
+  var ty=r.bottom+6;                       /* right under the face circle; flip above it at the screen edge */
+  if(ty+card.offsetHeight>window.innerHeight-8) ty=r.top-card.offsetHeight-6;
   card.style.top=Math.max(6,ty)+"px";
 }
 function dcHide(){ clearTimeout(dcTimer); $("#dcard").classList.remove("on"); dcRow=null }
@@ -2670,10 +2744,14 @@ document.addEventListener("mouseover",function(e){
   var row=e.target.closest(".gridwrap .row");
   var ln=row&&e.target.closest(".lane");
   clearTimeout(dcTimer);
-  if(ln&&row.dataset.drv) dcTimer=setTimeout(function(){dcShow(row)},dcRow?0:150);
+  if(ln&&row.dataset.drv&&e.target.closest(".av,.xph")&&LANEBY==="driver"){ var fe=e.target.closest(".av,.xph"); dcTimer=setTimeout(function(){dcShow(row,fe)},dcRow?0:150) }
   else dcTimer=setTimeout(dcHide,120);
 });
 document.addEventListener("click",function(e){
+  var sg=e.target.closest("[data-laneby]");
+  if(sg){ LANEBY=sg.dataset.laneby; dcHide(); drawBoard(); return }
+  var fc=LANEBY==="driver"&&e.target.closest(".gridwrap .lane .av,.gridwrap .lane .xph");
+  if(fc){ var fr=fc.closest(".row"); if(fr&&fr.dataset.drv){ dcHide(); window.open("mon 27sep review/driver-view.html?driver="+encodeURIComponent(fr.dataset.drv),"_blank"); return } }
   var b=e.target.closest("#dcard [data-dc]");
   if(!b) return;
   var a=b.dataset.dc, dn=b.dataset.dn;
@@ -3792,9 +3870,9 @@ function openSms(dr){
     '<div class="fb"><div class="fgp"><div style="display:flex;align-items:center"><label class="fl" style="margin:0;flex:1">Phone number</label>'+
       '<label class="fchk" style="font-size:11px"><input type="checkbox" data-fa="smscustom"> Custom</label></div>'+
       '<input class="fi ro" id="fsPhone" value="'+esc(dr.phone)+'" readonly style="margin-top:6px"></div>'+
-    '<div class="fgp"><label class="fl">Message</label><input class="fi" id="fsMsg" placeholder="Enter" maxlength="320" data-focus="1"><div class="ferr" id="fsErr" hidden></div></div>'+
+    '<div class="fgp"><label class="fl">Message</label><input class="fi" id="fsMsg" placeholder="Enter" maxlength="320" data-focus="1"><div class="ferr" id="fsErr" hidden></div><div style="display:flex;justify-content:flex-end;margin-top:8px"><button type="button" class="fbtn" data-fa="smssend">Send</button></div></div>'+
     '<div class="fh2" style="margin-top:16px">Previous messages</div><div class="fhist" style="padding:10px 10px 2px;max-height:230px;border-radius:10px" id="fsList">'+smsList(dr)+'</div></div>'+
-    '<div class="ff"><div class="sp"></div><button type="button" class="fbtn ghost" data-fa="close">Cancel</button><button type="button" class="fbtn" data-fa="smssend">Send</button></div>',520,{dr:dr.n});
+    '<div class="ff"><div class="sp"></div><button type="button" class="fbtn ghost" data-fa="close">Cancel</button></div>',520,{dr:dr.n});
 }
 ACT.smscustom=function(b,c){ var i=document.getElementById("fsPhone"); i.readOnly=!b.checked; i.classList.toggle("ro",!b.checked); if(b.checked){ i.focus(); i.select() } else i.value=c.dr.phone };
 ACT.smssend=function(b,c){
@@ -3813,7 +3891,14 @@ document.addEventListener("keydown",function(e){ if(e.key==="Enter"&&e.target.id
 var TPL={
  "Rate confirmation":function(dr,l){return ["Rate confirmation"+(l?" - "+l.load:""),"Hi "+dr.n.split(/[ ,]+/)[0]+",\n\nPlease confirm the rate and pickup details"+(l?" for load "+l.load+" ("+l.o+" to "+l.d+")":"")+" at your earliest convenience.\n\nThanks,\n"+ME]},
  "Pickup reminder":function(dr,l){return ["Pickup reminder"+(l?" - "+l.load:""),"Hi "+dr.n.split(/[ ,]+/)[0]+",\n\nA quick reminder about your pickup"+(l?" in "+l.o:"")+". Please message me when you arrive.\n\nThanks,\n"+ME]},
- "Document request":function(dr,l){return ["Documents needed"+(l?" - "+l.load:""),"Hi "+dr.n.split(/[ ,]+/)[0]+",\n\nPlease send the signed BOL and delivery receipt"+(l?" for load "+l.load:"")+" as soon as you can.\n\nThanks,\n"+ME]}
+ "Document request":function(dr,l){return ["Documents needed"+(l?" - "+l.load:""),"Hi "+dr.n.split(/[ ,]+/)[0]+",\n\nPlease send the signed BOL and delivery receipt"+(l?" for load "+l.load:"")+" as soon as you can.\n\nThanks,\n"+ME]},
+ "Delivery ETA request":function(dr,l){return ["ETA update"+(l?" - "+l.load:""),"Hi "+dr.n.split(/[ ,]+/)[0]+",\n\nCan you send me your current ETA"+(l?" to "+l.d+" for load "+l.load:"")+"? The receiver is asking.\n\nThanks,\n"+ME]},
+ "Appointment change":function(dr,l){return ["Appointment change"+(l?" - "+l.load:""),"Hi "+dr.n.split(/[ ,]+/)[0]+",\n\nThe appointment"+(l?" for load "+l.load:"")+" has been moved. The new window is in the load notes. Please confirm you can make it.\n\nThanks,\n"+ME]},
+ "Detention notice":function(dr,l){return ["Detention notice"+(l?" - "+l.load:""),"Hi "+dr.n.split(/[ ,]+/)[0]+",\n\nPlease note your arrival and departure times"+(l?" at "+l.o:"")+" so we can bill detention. Send the signed time stamps when you leave.\n\nThanks,\n"+ME]},
+ "Breakdown check-in":function(dr,l){return ["Checking in"+(l?" - "+l.load:""),"Hi "+dr.n.split(/[ ,]+/)[0]+",\n\nI saw the truck has stopped. Is everything OK? Tell me where you are and if you need roadside help so I can update the customer.\n\nThanks,\n"+ME]},
+ "Hours of service reminder":function(dr,l){return ["Hours of service reminder","Hi "+dr.n.split(/[ ,]+/)[0]+",\n\nPlease check your remaining drive and duty hours before the next pickup"+(l?" ("+l.o+")":"")+" and let me know if the plan needs to change.\n\nThanks,\n"+ME]},
+ "New load assigned":function(dr,l){return ["New load assigned"+(l?" - "+l.load:""),"Hi "+dr.n.split(/[ ,]+/)[0]+",\n\nYou have a new load"+(l?": "+l.load+" ("+l.o+" to "+l.d+")":"")+". Please review the details and reply to confirm.\n\nThanks,\n"+ME]},
+ "Safety and fuel stop":function(dr,l){return ["Fuel stop plan"+(l?" - "+l.load:""),"Hi "+dr.n.split(/[ ,]+/)[0]+",\n\nPlease fuel at an approved stop on the route"+(l?" to "+l.d:"")+" and send the receipt. Keep your tires and trailer checks logged.\n\nThanks,\n"+ME]}
 };
 function openMail(dr){
   var ob="";
@@ -3833,7 +3918,7 @@ function openMail(dr){
     '<div class="ebody" id="emBody" contenteditable="true" data-ph="Message" role="textbox" aria-multiline="true" aria-label="Message"></div>'+
     '<div class="ferr" id="emErr" hidden style="padding:0 14px 6px"></div>'+
     '<div class="efoot"><button type="button" class="fbtn ghost sm" data-fa="emattach">'+ic("clip")+'Add Attachment</button><input type="file" id="emFile" multiple hidden><span id="emAtt" style="display:contents"></span><div class="sp"></div>'+
-      '<button type="button" class="fbtn" data-fa="emsend">Send '+ic("send")+'</button></div></div>',580,dr.n);
+      '<button type="button" class="fbtn" data-fa="emsend">Send '+ic("send")+'</button></div></div>',720,dr.n);
   w._att=[]; w.querySelector("#emSub").focus();
 }
 document.addEventListener("mousedown",function(e){ if(e.target.closest(".etool button")) e.preventDefault() });
@@ -3925,7 +4010,7 @@ function openFind(dr,tab){
     '<div class="fb" style="padding-top:12px"><div class="fg c4" id="ffFilters" style="grid-template-columns:1fr 130px;margin-bottom:12px;max-width:520px">'+
       '<div><label class="fl">Nearest load</label><input class="fi" id="ffNear" placeholder="Enter city/state or zip code"></div>'+
       '<div><label class="fl">DH miles</label><input class="fi" id="ffDh" inputmode="numeric" placeholder="Enter DH miles"></div></div>'+
-    '<div id="ffBody"></div></div>',1120,{dr:dr.n});
+    '<div id="ffBody"></div></div>',1400,{dr:dr.n});
   findRender();
 }
 function findRows(){
@@ -4111,7 +4196,7 @@ ACT.ofview=function(b){
   var o=offerById(b.dataset.id);
   openP("ofv",head("Offer details",esc(o.broker)+" &middot; load "+esc(o.load))+
     '<div class="fb"><dl class="fkv">'+[["Broker",o.broker],["MC#",o.mc],["Credit",o.credit],["Contact",o.contact],["Phone",o.phone],["Pickup",stamp(o.s)+" &middot; "+esc(o.o)],["Delivery",stamp(o.e)+" &middot; "+esc(o.d)],
-      ["Extra stops",o.extra],["Deadhead / loaded / total",o.empty+" / "+o.loaded+" / "+o.total+" mi"],["Trailer",esc(o.trailer)],["Offer",money(o.rate,2)],["Per mile",money(o.rate/o.total,2)]].map(function(k){return '<dt>'+k[0]+'</dt><dd>'+k[1]+'</dd>'}).join("")+'</dl></div>'+
+      ["Extra stops",o.extra],["Deadhead / loaded / total",o.empty+" / "+o.loaded+" / "+o.total+" mi"],["Trailer",esc(o.trailer)],["Offer",money(o.rate,2)],["Per mile",money(o.rate/o.total,2)]].concat(o.notes?[["Notes",esc(o.notes)]]:[]).map(function(k){return '<dt>'+k[0]+'</dt><dd>'+k[1]+'</dd>'}).join("")+'</dl></div>'+
     '<div class="ff"><div class="sp"></div><button type="button" class="fbtn ghost" data-fa="close">Close</button></div>',460,{dr:OFR.dr.n});
 };
 function econ(o){
@@ -4148,15 +4233,43 @@ document.addEventListener("change",function(e){
 });
 ACT.cmpbook=function(b,c){ var o=c.panel["_"+b.dataset.k]; ACT.ofbook({dataset:{id:o.id}}) };
 ACT.cmprm=function(b,c){ var o=c.panel["_"+b.dataset.k], l=offersFor(OFR.dr), i=l.indexOf(o); if(i>=0) l.splice(i,1); closeId("cmp"); OFR.sel=[]; offersRender(); toastMsg("Offer removed") };
+/* broker directory for the Log New Offer search-and-select: one entry per partner / company broker seen on the load boards */
+function brokerDir(){
+  var seen={}, out=[];
+  PARTNER_LOADS.concat(COMPANY_LOADS).forEach(function(l){ if(seen[l.src]) return; seen[l.src]=1; out.push({n:l.src,mc:l.mc,credit:l.credit,contact:l.contact,phone:l.phone}) });
+  return out.sort(function(a,b){return a.n.localeCompare(b.n)});
+}
+function brokerList(q){
+  var t=String(q||"").trim().toLowerCase(), l=brokerDir().filter(function(b){return !t||(b.n+" "+b.mc+" "+b.contact).toLowerCase().indexOf(t)>=0});
+  var box=document.getElementById("lgBl"); if(!box) return;
+  box.innerHTML=l.length?l.map(function(b,i){return '<button type="button" class="bsi" data-bpick="'+esc(b.n)+'"><b>'+esc(b.n)+'</b><span>MC# '+esc(b.mc)+' &middot; '+esc(b.contact)+'</span></button>'}).join(""):'<div class="bsn">No broker matches &ldquo;'+esc(q)+'&rdquo;</div>';
+  box.hidden=false;
+}
+document.addEventListener("input",function(e){
+  if(e.target.id!=="lgBr") return;
+  var i=e.target; i.dataset.pick=""; ["lgMc","lgCt","lgPh"].forEach(function(k){document.getElementById(k).value=""});
+  brokerList(i.value);
+});
+document.addEventListener("focusin",function(e){ if(e.target.id==="lgBr") brokerList(e.target.value) });
+document.addEventListener("click",function(e){
+  var p=e.target.closest("[data-bpick]"), box=document.getElementById("lgBl");
+  if(p){
+    var b=brokerDir().filter(function(x){return x.n===p.dataset.bpick})[0], g=function(i){return document.getElementById(i)};
+    g("lgBr").value=b.n; g("lgBr").dataset.pick=b.n; g("lgBr").classList.remove("bad"); g("lgMc").value=b.mc; g("lgCt").value=b.contact; g("lgPh").value=b.phone; g("lgCr").value=b.credit;
+    box.hidden=true; return;
+  }
+  if(box&&!e.target.closest(".bsel")) box.hidden=true;
+});
 ACT.oflog=function(){
   openP("log",head("Log New Offer",esc(nm(OFR.dr)))+
-    '<div class="fb"><div class="fg c2"><div><label class="fl" for="lgBr">Broker</label><input class="fi" id="lgBr" data-focus="1"></div><div><label class="fl" for="lgMc">MC#</label><input class="fi" id="lgMc"></div></div>'+
+    '<div class="fb"><div class="fg c2"><div class="bsel"><label class="fl" for="lgBr">Broker</label><input class="fi" id="lgBr" data-focus="1" autocomplete="off" placeholder="Search broker, MC# or contact"><div class="bsl" id="lgBl" hidden></div></div><div><label class="fl" for="lgMc">MC#</label><input class="fi" id="lgMc" readonly placeholder="Auto-filled"></div></div>'+
     '<div class="fg c3"><div><label class="fl" for="lgCt">Contact</label><input class="fi" id="lgCt"></div><div><label class="fl" for="lgPh">Phone</label><input class="fi" id="lgPh" inputmode="tel"></div>'+
       '<div><label class="fl" for="lgCr">Credit</label><select class="fsel" id="lgCr"><option>A</option><option>B</option><option>C</option></select></div></div>'+
     '<div class="fg c2"><div><label class="fl" for="lgOr">Origin</label><input class="fi" id="lgOr" placeholder="City, ST"></div><div><label class="fl" for="lgDs">Destination</label><input class="fi" id="lgDs" placeholder="City, ST"></div></div>'+
     '<div class="fg c4"><div><label class="fl" for="lgEx">Extra stops</label><input class="fi" id="lgEx" inputmode="numeric" value="0"></div><div><label class="fl" for="lgEm">Deadhead mi</label><input class="fi" id="lgEm" inputmode="numeric" value="0"></div>'+
       '<div><label class="fl" for="lgLd">Loaded mi</label><input class="fi" id="lgLd" inputmode="numeric"></div><div><label class="fl" for="lgRt">Rate</label><input class="fi" id="lgRt" inputmode="decimal" placeholder="$"></div></div>'+
     '<div class="fgp"><label class="fl" for="lgTr">Trailer type</label><select class="fsel" id="lgTr"><option>Dry Van 53\'</option><option>Reefer 53\'</option><option>Flatbed 48\'</option></select></div>'+
+    '<div class="fgp"><label class="fl" for="lgNt">Notes</label><textarea class="fi" id="lgNt" rows="3" maxlength="500" placeholder="Add notes about this offer" style="height:auto;resize:vertical;padding:8px 10px;line-height:16px"></textarea></div>'+
     '<div class="ferr" id="lgErr" hidden></div></div>'+
     '<div class="ff"><div class="sp"></div><button type="button" class="fbtn ghost" data-fa="close">Cancel</button><button type="button" class="fbtn" data-fa="lgsave">Save offer</button></div>',560,{dr:OFR.dr.n});
 };
@@ -4166,10 +4279,11 @@ ACT.lgsave=function(){
   var rate=parseFloat(g("lgRt").value.replace(/[$,\s]/g,"")), ld=parseInt(g("lgLd").value,10);
   if(!g("lgBr").value.trim()) bad.push("lgBr"); if(!g("lgOr").value.trim()) bad.push("lgOr"); if(!g("lgDs").value.trim()) bad.push("lgDs");
   if(!(ld>0)) bad.push("lgLd"); if(!(rate>0)) bad.push("lgRt");
-  if(bad.length){ bad.forEach(function(i){g(i).classList.add("bad")}); er.textContent="Fill in the highlighted fields."; er.hidden=false; return g(bad[0]).focus() }
+  var unpicked=bad.indexOf("lgBr")<0&&g("lgBr").dataset.pick!==g("lgBr").value.trim(); if(unpicked) bad.unshift("lgBr");
+  if(bad.length){ bad.forEach(function(i){g(i).classList.add("bad")}); er.textContent=unpicked?"Select a broker from the list.":"Fill in the highlighted fields."; er.hidden=false; return g(bad[0]).focus() }
   var dr=OFR.dr, em=parseInt(g("lgEm").value,10)||0, f={equip:g("lgTr").value,reqs:REQS[0],miles:ld,dh:em,rate:rate,id:"LOG-"+(100+seq()),src:g("lgBr").value.trim(),cust:g("lgBr").value.trim(),o:g("lgOr").value.trim(),d:g("lgDs").value.trim()};
   var sl=slotFor(dr,f);
-  offersFor(dr).unshift({id:seq(),load:f.id,broker:f.src,mc:g("lgMc").value.trim()||"-",credit:g("lgCr").value,contact:g("lgCt").value.trim()||"-",phone:g("lgPh").value.trim()||"-",s:sl.s,e:sl.e,o:f.o,d:f.d,extra:parseInt(g("lgEx").value,10)||0,empty:em,loaded:ld,total:ld+em,rate:rate,trailer:f.equip,status:"pending",ref:f});
+  offersFor(dr).unshift({id:seq(),load:f.id,broker:f.src,mc:g("lgMc").value.trim()||"-",credit:g("lgCr").value,contact:g("lgCt").value.trim()||"-",phone:g("lgPh").value.trim()||"-",s:sl.s,e:sl.e,o:f.o,d:f.d,extra:parseInt(g("lgEx").value,10)||0,empty:em,loaded:ld,total:ld+em,rate:rate,trailer:f.equip,notes:g("lgNt").value.trim(),status:"pending",ref:f});
   closeId("log"); offersRender(); toastMsg("Offer from <b>"+esc(f.src)+"</b> logged for "+esc(nm(dr)));
 };
 
@@ -4513,6 +4627,9 @@ seedRsv();
 #addm .aload .x{text-align:right;flex:none}
 #addm .aload .x b{display:block;font-size:12.5px}
 #addm .aload .x span{color:#8a8f9c;font-size:11px}
+#addm .aload .x .cpm{display:block;margin-top:2px;color:#178a3c;font-weight:600}
+#addm .atabs .abuild{display:flex;align-items:center;justify-content:center;gap:5px;color:var(--fblue)}
+#addm .atabs .abuild svg{width:12px;height:12px}
 #addm .aempty{padding:22px;text-align:center;color:#8a8f9c}
 #addm .af2{display:flex;justify-content:flex-end;gap:10px;padding:14px 22px 18px;border-top:1px solid #eef1f4;margin-top:10px}
 #addm .af2 button{height:34px;padding:0 20px;border-radius:8px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
@@ -4538,7 +4655,7 @@ function fld(id,lb,html,full,req){return '<div class="af'+(full?' full':'')+'" d
 function inp(id,ph,val,type){return '<input id="am_'+id+'" type="'+(type||"text")+'" placeholder="'+ph+'" value="'+esc(val||"")+'">'}
 function head(){
   return '<div class="ah"><div><div class="t">Add to schedule</div><div class="s">'+esc(A.dr.n)+' · '+esc(A.dr.truck)+' · starting '+esc(stamp(A.at))+'</div></div><span class="sp"></span><button class="ax" data-am="close" aria-label="Close">&times;</button></div>'+
-  '<div class="atabs">'+[["build","Build load"],["assign","Assign load"],["status","Assign status"]].map(function(t){return '<button data-am="tab" data-t="'+t[0]+'" class="'+(A.tab===t[0]?"on":"")+'">'+t[1]+'</button>'}).join("")+'</div>'
+  '<div class="atabs">'+[["build","Build load"],["assign","Assign load"],["status","Assign status"]].map(function(t){if(t[0]==="build") return '<button type="button" data-am="build" class="abuild" title="Opens the Edit load page in a new tab">'+t[1]+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></button>'; return '<button data-am="tab" data-t="'+t[0]+'" class="'+(A.tab===t[0]?"on":"")+'">'+t[1]+'</button>'}).join("")+'</div>'
 }
 function bodyBuild(){
   var e=A.at+8*60;
@@ -4554,7 +4671,7 @@ function bodyBuild(){
 function bodyAssign(){
   if(!OPEN.length) return '<div class="aempty">No unassigned loads are waiting on a driver.</div>';
   return '<div class="alist">'+OPEN.map(function(l,i){var ok=l.equip===A.dr.equip;
-    return '<div class="aload'+(A.pick===i?" on":"")+(ok?"":" dis")+'" data-am="pick" data-i="'+i+'"><span class="rd"></span><div class="m"><div class="n">'+esc(l.load)+' · '+esc(l.cust)+'</div><div class="r">'+esc(l.o)+' → '+esc(l.d)+' · '+esc(l.equip)+(ok?'':' · equipment mismatch')+'</div></div><div class="x"><b>'+esc(l.rate)+'</b><span>'+l.miles+' mi · '+l.hours+'h</span></div></div>'}).join("")+'</div>'+
+    return '<div class="aload'+(A.pick===i?" on":"")+(ok?"":" dis")+'" data-am="pick" data-i="'+i+'"><span class="rd"></span><div class="m"><div class="n">'+esc(l.load)+' · '+esc(l.cust)+'</div><div class="r">'+esc(l.o)+' → '+esc(l.d)+' · '+esc(l.equip)+(ok?'':' · equipment mismatch')+'</div></div><div class="x"><b>'+esc(l.rate)+'</b><span>'+l.miles+' mi · '+l.hours+'h</span><span class="cpm">'+(l.miles>0?money((parseFloat(String(l.rate).replace(/[$,]/g,''))||0)/l.miles)+'/mi':'-')+'</span></div></div>'}).join("")+'</div>'+
   '<div class="aerr" id="am_err"></div><div class="ahint">The load starts at '+esc(stamp(A.at))+' and runs for its planned hours.</div>'
 }
 function bodyStatus(){
@@ -4612,7 +4729,7 @@ function saveStatus(){
 }
 window.dpAdd=function(n,at){
   var dr=DRIVERS.filter(function(d){return d.n===n})[0]; if(!dr) return;
-  A.dr=dr; A.at=at; A.tab="build"; A.pick=null; A.vis="Internal";
+  A.dr=dr; A.at=at; A.tab="assign"; A.pick=null; A.vis="Internal";
   render(); document.getElementById("addm").classList.add("on"); document.getElementById("amscrim").classList.add("on");
 };
 document.addEventListener("click",function(e){
@@ -4620,6 +4737,7 @@ document.addEventListener("click",function(e){
   var b=e.target.closest("#addm [data-am]"); if(!b) return;
   var a=b.dataset.am;
   if(a==="close") close();
+  else if(a==="build"){ window.open("https://dpeditload.pages.dev/?driver="+encodeURIComponent(A.dr.n)+"&truck="+encodeURIComponent(A.dr.truck)+"&start="+encodeURIComponent(stamp(A.at)),"_blank","noopener"); close() }
   else if(a==="tab"){A.tab=b.dataset.t;A.pick=null;render()}
   else if(a==="vis"){A.vis=b.dataset.v;var nt=g("nt");render();var t=document.getElementById("am_nt");if(t)t.value=nt}
   else if(a==="pick"){ if(b.classList.contains("dis")) return err(A.dr.n+" is on a "+A.dr.equip+" and this load needs a "+OPEN[+b.dataset.i].equip+"."); A.pick=+b.dataset.i;render() }
@@ -5062,6 +5180,83 @@ $m("#fspan").addEventListener("change",function(){ setTimeout(draw,0) });
 var _setAssign=setAssign; setAssign=function(i){ _setAssign(i); if(MV.on) draw() };
 try{ if(localStorage.getItem("dpview")==="map") setView("map") }catch(e){}
 window.dpMapView=setView;
+})();
+</script>
+<script>
+/* Every native <select> becomes the pay-profile dropdown: a trigger button plus a fixed panel with a check on the chosen row.
+   The real select stays in the DOM (hidden) so existing code that reads .value or listens for "change" keeps working. */
+(function(){
+var CHEV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+var CK='<svg class="ck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+var panel=document.createElement("div"); panel.className="sdd-p"; panel.hidden=true; panel.setAttribute("role","listbox"); document.body.appendChild(panel);
+var cur=null;
+function closeP(){ if(!cur) return; cur.wrap.classList.remove("open"); cur.trig.setAttribute("aria-expanded","false"); panel.hidden=true; cur=null }
+function esc2(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function sync(s){
+  var o=s.options[s.selectedIndex], v=s._v, has=!!(o&&!(o.disabled&&o.value===""));
+  var txt=o?o.textContent:"Select"; if(v.textContent!==txt) v.textContent=txt;     /* only on a real change, or the observer below would loop on its own write */
+  v.classList.toggle("ph",!has);
+  s._t.disabled=s.disabled; s._w.style.display=s.hidden?"none":"";
+  s._t.classList.toggle("bad",s.classList.contains("bad"));
+}
+function openP(s){
+  if(cur&&cur.sel===s){ closeP(); return }
+  closeP();
+  panel.innerHTML=Array.prototype.map.call(s.options,function(o,i){
+    if(o.disabled&&o.value==="") return "";
+    return '<button type="button" class="sdd-i'+(o.selected?" on":"")+'" role="option" aria-selected="'+o.selected+'" data-i="'+i+'"><span>'+esc2(o.textContent)+'</span>'+CK+'</button>';
+  }).join("");
+  var r=s._t.getBoundingClientRect();
+  panel.hidden=false; panel.style.visibility="hidden"; panel.style.minWidth=Math.max(120,r.width)+"px"; panel.style.maxHeight="260px";
+  var h=panel.offsetHeight, below=window.innerHeight-r.bottom-8, above=r.top-8;
+  var up=h>below&&above>below;
+  panel.style.maxHeight=Math.max(120,Math.min(260,up?above:below))+"px"; h=panel.offsetHeight;
+  panel.style.left=Math.max(6,Math.min(window.innerWidth-panel.offsetWidth-6,r.left))+"px";
+  panel.style.top=(up?r.top-h-4:r.bottom+4)+"px"; panel.style.visibility="";
+  s._w.classList.add("open"); s._t.setAttribute("aria-expanded","true"); cur={sel:s,wrap:s._w,trig:s._t};
+  var on=panel.querySelector(".sdd-i.on"); if(on) on.scrollIntoView({block:"nearest"});
+}
+function choose(s,i){
+  var o=s.options[i]; if(!o) return;
+  s.selectedIndex=i; closeP(); sync(s); s.dispatchEvent(new Event("change",{bubbles:true})); s._t.focus();
+}
+function enhance(s){
+  if(s._w||s.multiple||s.size>1) return;
+  var cs=getComputedStyle(s), w=document.createElement("span"), t=document.createElement("button"), v=document.createElement("span");
+  w.className="sdd"; t.type="button"; t.className="sdd-t"; v.className="sdd-v"; t.appendChild(v); t.insertAdjacentHTML("beforeend",CHEV);
+  t.setAttribute("aria-haspopup","listbox"); t.setAttribute("aria-expanded","false"); if(s.getAttribute("aria-label")) t.setAttribute("aria-label",s.getAttribute("aria-label"));
+  var h=parseFloat(cs.height); t.style.height=(h>0?h:32)+"px";
+  if(s.style.minWidth) t.style.minWidth=s.style.minWidth;
+  if(s.style.fontWeight) t.style.fontWeight=s.style.fontWeight;
+  if(s.closest(".etool")){ t.style.fontSize="11.5px"; t.style.padding="0 6px" }
+  var pw=s.parentNode.clientWidth, sw=parseFloat(cs.width);
+  if(!s.closest(".etool")&&sw>0&&pw>0&&sw<pw-4){ w.style.display="inline-block"; w.style.width=sw+"px" }
+  s.parentNode.insertBefore(w,s); w.appendChild(t); w.appendChild(s); s.classList.add("sdd-native"); s.tabIndex=-1;
+  s._w=w; s._t=t; s._v=v; s._sync=function(){sync(s)};
+  t.addEventListener("click",function(e){ e.stopPropagation(); openP(s) });
+  t.addEventListener("keydown",function(e){
+    if(e.key==="ArrowDown"||e.key==="ArrowUp"){
+      e.preventDefault(); if(!cur||cur.sel!==s) return openP(s);
+      var l=[].slice.call(panel.querySelectorAll(".sdd-i")), i=l.indexOf(panel.querySelector(".sdd-i.hi")); l.forEach(function(x){x.classList.remove("hi")});
+      i=e.key==="ArrowDown"?Math.min(l.length-1,i+1):Math.max(0,i<0?0:i-1); l[i].classList.add("hi"); l[i].scrollIntoView({block:"nearest"});
+    } else if(e.key==="Enter"&&cur&&cur.sel===s){ var hi=panel.querySelector(".sdd-i.hi"); if(hi){ e.preventDefault(); choose(s,+hi.dataset.i) } }
+    else if(e.key==="Escape"&&cur){ e.stopPropagation(); closeP() }
+  });
+  sync(s);
+}
+panel.addEventListener("mousedown",function(e){ e.preventDefault() });
+panel.addEventListener("click",function(e){ var b=e.target.closest(".sdd-i"); if(b&&cur) choose(cur.sel,+b.dataset.i) });
+document.addEventListener("click",function(e){ if(cur&&!e.target.closest(".sdd-p,.sdd-t")) closeP() });
+window.addEventListener("resize",closeP);
+document.addEventListener("scroll",function(e){ if(cur&&!panel.contains(e.target)) closeP() },true);
+/* code that assigns select.value directly (e.g. the broker picker filling Credit) keeps the trigger in step */
+var d=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,"value");
+Object.defineProperty(HTMLSelectElement.prototype,"value",{get:d.get,set:function(x){ d.set.call(this,x); if(this._sync) this._sync() },configurable:true});
+function scan(root){ root.querySelectorAll("select:not(.sdd-native)").forEach(enhance) }
+var q=0; new MutationObserver(function(){
+  if(q) return; q=requestAnimationFrame(function(){ q=0; scan(document.body); document.querySelectorAll(".sdd-native").forEach(function(s){ if(s._sync) s._sync() }) });
+}).observe(document.body,{childList:true,subtree:true});
+scan(document.body);
 })();
 </script>
 </body>
